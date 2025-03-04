@@ -10,7 +10,6 @@ import {
   Button,
   Stack,
   Group,
-  SegmentedControl,
   Grid
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
@@ -22,11 +21,13 @@ interface AssetFormProps {
   asset: Asset | null;
   onClose: () => void;
   initialType?: AssetType;
+  customTypeId?: string;
 }
 
-export default function AssetForm({ asset, onClose, initialType }: AssetFormProps) {
+export default function AssetForm({ asset, onClose, initialType, customTypeId }: AssetFormProps) {
   const { 
     accounts,
+    customAssetTypes,
     addAsset,
     updateAsset
   } = useFinanceStore();
@@ -35,22 +36,29 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
     asset?.type || initialType || AssetType.CRYPTOCURRENCY
   );
   
+  const [selectedCustomTypeId, setSelectedCustomTypeId] = useState<string | null>(
+    (asset?.type === AssetType.CUSTOM && asset.customTypeId) || customTypeId || null
+  );
+  
   // Create form with validation
   const form = useForm({
     initialValues: {
       name: '',
       type: AssetType.CRYPTOCURRENCY,
+      customTypeId: '',
       accountId: '',
       quantity: 1,
       currentPrice: 0,
       acquisitionPrice: undefined as number | undefined,
-      purchaseDate: null as Date | null,  // Changed from acquisitionDate to match model
+      purchaseDate: null as Date | null,
+      acquisitionDate: null as Date | null,
       description: '',
       identifier: '',
     },
     validate: {
       name: (value) => (value.trim().length < 1 ? 'Asset name is required' : null),
       accountId: (value) => (value.trim().length < 1 ? 'Account is required' : null),
+      customTypeId: (value) => (assetType === AssetType.CUSTOM && !value ? 'Custom asset type is required' : null),
       quantity: (value) => (value <= 0 ? 'Quantity must be greater than 0' : null),
       currentPrice: (value) => (value < 0 ? 'Current price cannot be negative' : null),
       acquisitionPrice: (value) => (value !== undefined && value < 0 ? 'Acquisition price cannot be negative' : null),
@@ -63,24 +71,48 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
       form.setValues({
         name: asset.name,
         type: asset.type,
+        customTypeId: asset.customTypeId || '',
         accountId: asset.accountId,
         quantity: asset.quantity,
         currentPrice: asset.currentPrice,
         acquisitionPrice: asset.acquisitionPrice,
-        purchaseDate: asset.purchaseDate || null,  // Changed from acquisitionDate to match model
+        purchaseDate: asset.purchaseDate || null,
+        acquisitionDate: asset.acquisitionDate || null,
         description: asset.description || '',
         identifier: asset.identifier || '',
       });
       setAssetType(asset.type);
-    } else if (initialType) {
-      form.setFieldValue('type', initialType);
+      if (asset.type === AssetType.CUSTOM && asset.customTypeId) {
+        setSelectedCustomTypeId(asset.customTypeId);
+      }
+    } else {
+      if (initialType) {
+        form.setFieldValue('type', initialType);
+      }
+      if (customTypeId) {
+        form.setFieldValue('customTypeId', customTypeId);
+        form.setFieldValue('type', AssetType.CUSTOM);
+        setAssetType(AssetType.CUSTOM);
+        setSelectedCustomTypeId(customTypeId);
+      }
     }
-  }, [asset, initialType]);
+  }, [asset, initialType, customTypeId]);
   
   // Handle asset type change
   useEffect(() => {
     form.setFieldValue('type', assetType);
+    if (assetType !== AssetType.CUSTOM) {
+      setSelectedCustomTypeId(null);
+      form.setFieldValue('customTypeId', '');
+    }
   }, [assetType]);
+  
+  // Handle custom type change
+  useEffect(() => {
+    if (selectedCustomTypeId) {
+      form.setFieldValue('customTypeId', selectedCustomTypeId);
+    }
+  }, [selectedCustomTypeId]);
   
   // Create account options
   const accountOptions = accounts
@@ -90,16 +122,25 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
       label: `${account.name} (${account.currency})`
     }));
   
+  // Create custom type options
+  const customTypeOptions = customAssetTypes.map(type => ({
+    value: type.id,
+    label: type.name
+  }));
+  
   // Handle form submission
   const handleSubmit = form.onSubmit((values) => {
     const assetData = {
       name: values.name,
       type: values.type as AssetType,
+      customTypeId: values.type === AssetType.CUSTOM ? values.customTypeId : undefined,
       accountId: values.accountId,
       quantity: values.quantity,
       currentPrice: values.currentPrice,
       purchasePrice: values.acquisitionPrice || 0,
-      purchaseDate: values.purchaseDate || new Date(),  // Changed to match model
+      purchaseDate: values.purchaseDate || new Date(),
+      acquisitionPrice: values.acquisitionPrice,
+      acquisitionDate: values.acquisitionDate || values.purchaseDate,
       description: values.description || undefined,
       identifier: values.identifier || undefined,
       lastUpdated: new Date(),
@@ -124,6 +165,15 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
         return 'e.g., AAPL, TSLA, MSFT';
       case AssetType.REAL_ESTATE:
         return 'e.g., Property address';
+      case AssetType.CUSTOM: {
+        if (selectedCustomTypeId) {
+          const customType = customAssetTypes.find(t => t.id === selectedCustomTypeId);
+          return customType?.description ? 
+            `e.g., ${customType.description}` : 
+            'e.g., Serial number, unique identifier';
+        }
+        return 'e.g., Serial number, unique identifier';
+      }
       default:
         return 'e.g., Serial number, unique identifier';
     }
@@ -134,13 +184,27 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
       <Stack>
         <Select
           label="Asset Type"
-          data={Object.entries(ASSET_TYPES).map(([type, info]) => ({
-            value: type,
-            label: info.name
-          }))}
+          data={[
+            ...Object.entries(ASSET_TYPES).map(([type, info]) => ({
+              value: type,
+              label: info.name
+            })),
+            { value: AssetType.CUSTOM, label: 'Custom Asset Type' }
+          ]}
           value={assetType}
           onChange={(value) => setAssetType(value as AssetType)}
         />
+        
+        {assetType === AssetType.CUSTOM && (
+          <Select
+            label="Custom Asset Type"
+            placeholder="Select a custom asset type"
+            data={customTypeOptions}
+            value={selectedCustomTypeId || ''}
+            onChange={(value) => setSelectedCustomTypeId(value)}
+            withAsterisk
+          />
+        )}
         
         <TextInput
           label="Asset Name"
@@ -150,6 +214,11 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
             assetType === AssetType.REAL_ESTATE ? 'Main Street Property' :
             assetType === AssetType.VEHICLE ? '2023 Tesla Model 3' :
             assetType === AssetType.ELECTRONICS ? 'MacBook Pro' :
+            assetType === AssetType.CUSTOM && selectedCustomTypeId ? 
+              (() => {
+                const customType = customAssetTypes.find(t => t.id === selectedCustomTypeId);
+                return customType ? customType.name : 'Custom Asset';
+              })() :
             'My Asset'
           }`}
           required
@@ -208,11 +277,11 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
           </Grid.Col>
           <Grid.Col span={6}>
             <DateInput
-              label="Purchase Date (optional)"  // Updated label to match field name
+              label="Acquisition Date (optional)"
               placeholder="Select date"
               valueFormat="DD/MM/YYYY"
               clearable
-              {...form.getInputProps('purchaseDate')}  // Changed from acquisitionDate to match model
+              {...form.getInputProps('acquisitionDate')}
             />
           </Grid.Col>
         </Grid>

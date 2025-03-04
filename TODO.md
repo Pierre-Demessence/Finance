@@ -22,7 +22,7 @@
 
 * Assets Page:
   * ✓ Editing an asset to change the acquisition date doesn't save the date.
-  * Other tab doesn't work
+  * ✓ Other tab doesn't work
 
 * Others:
   * Fix theme selection flickering on page load. (It starts with light theme, then swith to dark theme)

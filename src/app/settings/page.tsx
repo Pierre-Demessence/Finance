@@ -20,6 +20,8 @@ import {
   ColorInput,
   Modal,
   Alert,
+  ThemeIcon,
+  Textarea
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
@@ -37,10 +39,17 @@ import {
   IconUpload,
   IconTrashX,
   IconDatabase,
+  IconCube,
+  IconBoxModel,
+  IconCurrencyBitcoin,
+  IconChartLine,
+  IconBuilding,
+  IconCar,
+  IconDeviceLaptop,
 } from '@tabler/icons-react';
 import { useFinanceStore } from '@/store/financeStore';
-import { CURRENCIES } from '@/config/constants';
-import { AccountCategory, TransactionCategory, TransactionType } from '@/models';
+import { CURRENCIES, ASSET_TYPES } from '@/config/constants';
+import { AccountCategory, TransactionCategory, TransactionType, CustomAssetType } from '@/models';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<string | null>('general');
@@ -53,6 +62,10 @@ export default function SettingsPage() {
   const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [demoDataLoaded, setDemoDataLoaded] = useState(false);
+  
+  // Added for asset types
+  const [assetTypeModalOpened, assetTypeModal] = useDisclosure(false);
+  const [currentAssetType, setCurrentAssetType] = useState<CustomAssetType | null>(null);
   
   // Create a reference to the file input element for importing data
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,7 +84,12 @@ export default function SettingsPage() {
     exportData,
     importData,
     resetData,
-    loadDemoData
+    loadDemoData,
+    // Added for asset types
+    customAssetTypes,
+    addCustomAssetType,
+    updateCustomAssetType,
+    deleteCustomAssetType
   } = useFinanceStore();
   
   // Form for adding/editing categories
@@ -80,6 +98,14 @@ export default function SettingsPage() {
     icon: '',
     color: '',
     type: TransactionType.INCOME,
+  });
+  
+  // Form for asset types
+  const [assetTypeFormData, setAssetTypeFormData] = useState({
+    name: '',
+    icon: '',
+    color: '',
+    description: '',
   });
   
   // Prepare currency options for select input
@@ -297,6 +323,63 @@ export default function SettingsPage() {
     close();
   };
 
+  // Handle asset type edit
+  const handleEditAssetType = (assetType: CustomAssetType) => {
+    setCurrentAssetType(assetType);
+    setAssetTypeFormData({
+      name: assetType.name,
+      icon: assetType.icon || '',
+      color: assetType.color || '',
+      description: assetType.description || '',
+    });
+    assetTypeModal.open();
+  };
+  
+  // Handle add new asset type
+  const handleAddAssetType = () => {
+    setCurrentAssetType(null);
+    setAssetTypeFormData({
+      name: '',
+      icon: '',
+      color: '',
+      description: '',
+    });
+    assetTypeModal.open();
+  };
+  
+  // Handle saving asset type
+  const handleSaveAssetType = () => {
+    if (!assetTypeFormData.name.trim()) {
+      return; // Basic validation
+    }
+    
+    const assetTypeData = {
+      name: assetTypeFormData.name,
+      icon: assetTypeFormData.icon || undefined,
+      color: assetTypeFormData.color || undefined,
+      description: assetTypeFormData.description || undefined,
+    };
+    
+    if (currentAssetType) {
+      updateCustomAssetType(currentAssetType.id, assetTypeData);
+    } else {
+      addCustomAssetType(assetTypeData);
+    }
+    
+    assetTypeModal.close();
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
+  
+  // Handle delete asset type
+  const handleDeleteAssetType = (id: string) => {
+    const success = deleteCustomAssetType(id);
+    if (!success) {
+      alert('Cannot delete an asset type that is in use');
+    }
+    assetTypeModal.close();
+  };
+
   return (
     <Container size="lg">
       <Title order={2} mb="md">Settings</Title>
@@ -314,6 +397,12 @@ export default function SettingsPage() {
             leftSection={<IconCategoryPlus size={16} />}
           >
             Categories
+          </Tabs.Tab>
+          <Tabs.Tab 
+            value="assets" 
+            leftSection={<IconBoxModel size={16} />}
+          >
+            Asset Types
           </Tabs.Tab>
           <Tabs.Tab 
             value="currencies" 
@@ -689,6 +778,118 @@ export default function SettingsPage() {
             </Stack>
           </Card>
         </Tabs.Panel>
+        
+        {/* Asset Types Tab */}
+        <Tabs.Panel value="assets" pt="md">
+          <Card withBorder p="lg" mb="md">
+            <Group justify="space-between" mb="md">
+              <Text fw={500}>Custom Asset Types</Text>
+              <Button 
+                size="sm"
+                leftSection={<IconPlus size={16} />}
+                onClick={handleAddAssetType}
+              >
+                Add Asset Type
+              </Button>
+            </Group>
+            
+            <Divider mb="md" />
+            
+            {saveSuccess && (
+              <Alert 
+                icon={<IconCheck size="1rem" />} 
+                title="Asset type saved!" 
+                color="green" 
+                mb="md"
+              >
+                Your changes have been saved successfully.
+              </Alert>
+            )}
+            
+            {customAssetTypes.length === 0 ? (
+              <Text c="dimmed" ta="center" py="lg">
+                No custom asset types created yet. 
+                Click the "Add Asset Type" button to create your first custom asset type.
+              </Text>
+            ) : (
+              <>
+                <Text mb="sm" size="sm">
+                  Custom asset types appear as tabs on the Assets page and can be selected when creating new assets.
+                </Text>
+                
+                <Stack>
+                  {customAssetTypes.map(assetType => (
+                    <Group key={assetType.id} justify="space-between" mb="xs">
+                      <Group>
+                        <ThemeIcon 
+                          color={assetType.color || "gray"} 
+                          variant="light"
+                        >
+                          <IconCube size={16} />
+                        </ThemeIcon>
+                        <Text>{assetType.name}</Text>
+                      </Group>
+                      <Group>
+                        <ActionIcon 
+                          color="blue" 
+                          variant="subtle"
+                          onClick={() => handleEditAssetType(assetType)}
+                        >
+                          <IconEdit size={18} />
+                        </ActionIcon>
+                        <ActionIcon 
+                          color="red" 
+                          variant="subtle"
+                          onClick={() => handleDeleteAssetType(assetType.id)}
+                        >
+                          <IconTrash size={18} />
+                        </ActionIcon>
+                      </Group>
+                    </Group>
+                  ))}
+                </Stack>
+              </>
+            )}
+          </Card>
+          
+          <Card withBorder p="lg">
+            <Text fw={500} mb="md">Default Asset Types</Text>
+            <Text size="sm">
+              The following default asset types are always available in the application:
+            </Text>
+            
+            <Stack mt="md">
+              {Object.entries(ASSET_TYPES).map(([type, info]) => (
+                <Group key={type} justify="space-between">
+                  <Group>
+                    <ThemeIcon 
+                      color={
+                        type === 'cryptocurrency' ? 'blue' :
+                        type === 'stock' ? 'green' :
+                        type === 'real_estate' ? 'orange' :
+                        type === 'vehicle' ? 'red' :
+                        type === 'electronics' ? 'purple' :
+                        'gray'
+                      } 
+                      variant="light"
+                    >
+                      {type === 'cryptocurrency' ? <IconCurrencyBitcoin size={16} /> :
+                       type === 'stock' ? <IconChartLine size={16} /> :
+                       type === 'real_estate' ? <IconBuilding size={16} /> :
+                       type === 'vehicle' ? <IconCar size={16} /> :
+                       type === 'electronics' ? <IconDeviceLaptop size={16} /> :
+                       <IconCube size={16} />}
+                    </ThemeIcon>
+                    <div>
+                      <Text>{info.name}</Text>
+                      <Text size="xs" c="dimmed">{info.description}</Text>
+                    </div>
+                  </Group>
+                </Group>
+              ))}
+            </Stack>
+          </Card>
+        </Tabs.Panel>
       </Tabs>
       
       {/* Category Edit/Add Modal */}
@@ -746,6 +947,69 @@ export default function SettingsPage() {
             <Group ml="auto">
               <Button variant="light" onClick={close}>Cancel</Button>
               <Button onClick={handleSaveCategory}>Save</Button>
+            </Group>
+          </Group>
+        </Stack>
+      </Modal>
+      
+      {/* Asset Type Edit/Add Modal */}
+      <Modal 
+        opened={assetTypeModalOpened} 
+        onClose={assetTypeModal.close} 
+        title={`${currentAssetType ? 'Edit' : 'Add'} Asset Type`} 
+        size="md"
+      >
+        <Stack>
+          <TextInput
+            label="Asset Type Name"
+            placeholder="Enter asset type name"
+            value={assetTypeFormData.name}
+            onChange={(e) => setAssetTypeFormData({ ...assetTypeFormData, name: e.currentTarget.value })}
+            required
+          />
+          
+          <TextInput
+            label="Icon"
+            placeholder="Icon name (currently not displayed)"
+            description="For future use with icon library"
+            value={assetTypeFormData.icon}
+            onChange={(e) => setAssetTypeFormData({ ...assetTypeFormData, icon: e.currentTarget.value })}
+          />
+          
+          <ColorInput
+            label="Color"
+            placeholder="Choose a color"
+            description="Color used in charts and tabs"
+            swatchesPerRow={7}
+            format="hex"
+            swatches={[
+              '#1E88E5', '#43A047', '#FB8C00', '#E53935', '#8E24AA', 
+              '#3949AB', '#00ACC1', '#558B2F', '#D81B60', '#6D4C41',
+            ]}
+            value={assetTypeFormData.color}
+            onChange={(value) => setAssetTypeFormData({ ...assetTypeFormData, color: value })}
+          />
+          
+          <Textarea
+            label="Description"
+            placeholder="Short description of this asset type"
+            value={assetTypeFormData.description}
+            onChange={(e) => setAssetTypeFormData({ ...assetTypeFormData, description: e.currentTarget.value })}
+          />
+          
+          <Group justify="space-between" mt="md">
+            {currentAssetType && (
+              <Button 
+                color="red" 
+                variant="outline" 
+                onClick={() => handleDeleteAssetType(currentAssetType.id)}
+              >
+                Delete
+              </Button>
+            )}
+            <Group ml="auto">
+              <Button variant="light" onClick={assetTypeModal.close}>Cancel</Button>
+              <Button onClick={handleSaveAssetType}>Save</Button>
             </Group>
           </Group>
         </Stack>

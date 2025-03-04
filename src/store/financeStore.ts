@@ -11,7 +11,8 @@ import {
   Transaction,
   Asset,
   TransactionType,
-  AssetType
+  AssetType,
+  CustomAssetType
 } from '@/models';
 import { CURRENCIES } from '@/config/constants';
 import demoData from '@/data/demoData.json';
@@ -52,6 +53,12 @@ export interface FinanceStore {
   addAsset: (asset: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>) => string;
   updateAsset: (id: string, updates: Partial<Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>>) => boolean;
   deleteAsset: (id: string) => boolean;
+  
+  // Custom Asset Types
+  customAssetTypes: CustomAssetType[];
+  addCustomAssetType: (assetType: Omit<CustomAssetType, 'id'>) => string;
+  updateCustomAssetType: (id: string, updates: Partial<Omit<CustomAssetType, 'id'>>) => boolean;
+  deleteCustomAssetType: (id: string) => boolean;
   
   // Data Export/Import
   exportData: () => object;
@@ -109,6 +116,7 @@ export const useFinanceStore = create<FinanceStore>()(
       transactions: [],
       transactionCategories: DEFAULT_TRANSACTION_CATEGORIES,
       assets: [],
+      customAssetTypes: [],
       
       // Settings
       updateSettings: (newSettings) => {
@@ -393,9 +401,61 @@ export const useFinanceStore = create<FinanceStore>()(
         return true;
       },
       
+      // Custom Asset Type functions
+      addCustomAssetType: (assetType) => {
+        const id = uuidv4();
+        
+        set((state) => ({
+          customAssetTypes: [
+            ...state.customAssetTypes,
+            {
+              ...assetType,
+              id,
+            }
+          ]
+        }));
+        
+        return id;
+      },
+      
+      updateCustomAssetType: (id, updates) => {
+        let found = false;
+        
+        set((state) => ({
+          customAssetTypes: state.customAssetTypes.map(assetType => {
+            if (assetType.id === id) {
+              found = true;
+              return { ...assetType, ...updates };
+            }
+            return assetType;
+          })
+        }));
+        
+        return found;
+      },
+      
+      deleteCustomAssetType: (id) => {
+        const { assets } = get();
+        
+        // Check if any assets are using this type
+        const isInUse = assets.some(asset => 
+          asset.type === AssetType.CUSTOM && asset.customTypeId === id
+        );
+        
+        if (isInUse) {
+          return false;
+        }
+        
+        set((state) => ({
+          customAssetTypes: state.customAssetTypes.filter(type => type.id !== id)
+        }));
+        
+        return true;
+      },
+      
       // Data Export/Import functions
       exportData: () => {
-        const { settings, accounts, accountCategories, transactions, transactionCategories, assets } = get();
+        const { settings, accounts, accountCategories, transactions, transactionCategories, assets, customAssetTypes } = get();
         
         return {
           appVersion: '1.0.0',
@@ -407,6 +467,7 @@ export const useFinanceStore = create<FinanceStore>()(
             transactions,
             transactionCategories,
             assets,
+            customAssetTypes,
           }
         };
       },
@@ -442,6 +503,7 @@ export const useFinanceStore = create<FinanceStore>()(
               )
             ],
             assets: data.data.assets || [],
+            customAssetTypes: data.data.customAssetTypes || [],
           }));
           
           return true;
@@ -459,6 +521,7 @@ export const useFinanceStore = create<FinanceStore>()(
           transactions: [],
           transactionCategories: DEFAULT_TRANSACTION_CATEGORIES,
           assets: [],
+          customAssetTypes: [],
         }));
       },
 
@@ -609,6 +672,7 @@ export const useFinanceStore = create<FinanceStore>()(
         transactions: state.transactions,
         transactionCategories: state.transactionCategories,
         assets: state.assets,
+        customAssetTypes: state.customAssetTypes,
       }),
     }
   )

@@ -95,13 +95,24 @@ export enum AssetType {
   REAL_ESTATE = 'real_estate',
   VEHICLE = 'vehicle',
   ELECTRONICS = 'electronics',
-  OTHER = 'other'
+  OTHER = 'other',
+  CUSTOM = 'custom' // New type for custom asset types
+}
+
+// Custom Asset Type definition
+export interface CustomAssetType {
+  id: string;
+  name: string;
+  icon?: string;
+  color?: string;
+  description?: string;
 }
 
 // Asset
 export interface Asset extends BaseModel {
   name: string;
   type: AssetType;
+  customTypeId?: string; // Reference to a custom type if type is CUSTOM
   accountId: string; // Account where this asset is tracked
   description?: string;
   quantity: number;

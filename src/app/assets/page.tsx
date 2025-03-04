@@ -46,9 +46,9 @@ import ChartTooltip from '@/components/ChartTooltip';
 export default function AssetsPage() {
   const [opened, { open, close }] = useDisclosure(false);
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
-  const [activeTab, setActiveTab] = useState<AssetType | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<AssetType | 'all' | string>('all');
   
-  const { assets, accounts, deleteAsset } = useFinanceStore();
+  const { assets, accounts, customAssetTypes, deleteAsset } = useFinanceStore();
   const { formatAmount, toBaseCurrency } = useCurrency();
   
   // Filter assets based on active tab
@@ -60,7 +60,17 @@ export default function AssetsPage() {
       lastUpdated: new Date(asset.lastUpdated),
       acquisitionDate: asset.acquisitionDate ? new Date(asset.acquisitionDate) : undefined
     }))
-    .filter(asset => activeTab === 'all' || asset.type === activeTab);
+    .filter(asset => {
+      if (activeTab === 'all') return true;
+      
+      // For standard asset types
+      if (Object.values(AssetType).includes(activeTab as AssetType)) {
+        return String(asset.type) === String(activeTab);
+      }
+      
+      // For custom asset types (the tab value will be the custom type ID)
+      return asset.type === AssetType.CUSTOM && asset.customTypeId === activeTab;
+    });
   
   // Calculate total value across all assets, grouped by type
   const assetValues = assets.reduce((acc, asset) => {
@@ -70,15 +80,22 @@ export default function AssetsPage() {
     const value = asset.quantity * asset.currentPrice;
     const valueInBaseCurrency = toBaseCurrency(value, account.currency);
     
-    if (!acc[asset.type]) {
-      acc[asset.type] = {
+    let typeKey = asset.type;
+    
+    // For custom asset types, use the custom type ID as the key
+    if (asset.type === AssetType.CUSTOM && asset.customTypeId) {
+      typeKey = `custom_${asset.customTypeId}`;
+    }
+    
+    if (!acc[typeKey]) {
+      acc[typeKey] = {
         count: 0,
         value: 0,
       };
     }
     
-    acc[asset.type].count += 1;
-    acc[asset.type].value += valueInBaseCurrency;
+    acc[typeKey].count += 1;
+    acc[typeKey].value += valueInBaseCurrency;
     acc.total += valueInBaseCurrency;
     
     return acc;
@@ -87,14 +104,35 @@ export default function AssetsPage() {
   // Prepare data for the donut chart
   const donutData = Object.entries(assetValues)
     .filter(([key]) => key !== 'total')
-    .map(([type, data]) => ({
-      name: ASSET_TYPES[type as keyof typeof ASSET_TYPES]?.name || type,
-      value: typeof data === 'number' ? data : data.value,
-      color: getAssetTypeColor(type as AssetType),
-    }));
+    .map(([type, data]) => {
+      let name = type;
+      let color = '#757575'; // Default gray
+      
+      // Handle standard asset types
+      if (ASSET_TYPES[type as keyof typeof ASSET_TYPES]) {
+        name = ASSET_TYPES[type as keyof typeof ASSET_TYPES].name;
+        color = getAssetTypeColor(type as AssetType);
+      } 
+      // Handle custom asset types
+      else if (type.startsWith('custom_')) {
+        const customTypeId = type.replace('custom_', '');
+        const customType = customAssetTypes.find(t => t.id === customTypeId);
+        if (customType) {
+          name = customType.name;
+          color = customType.color || '#757575';
+        }
+      }
+      
+      return {
+        name,
+        value: typeof data === 'number' ? data : data.value,
+        color,
+      };
+    });
   
   // Get color for asset type
-  function getAssetTypeColor(type: AssetType): string {
+  function getAssetTypeColor(type: AssetType | string): string {
+    // For standard asset types
     switch (type) {
       case AssetType.CRYPTOCURRENCY: return '#1E88E5'; // Blue
       case AssetType.STOCK: return '#43A047'; // Green
@@ -102,12 +140,25 @@ export default function AssetsPage() {
       case AssetType.VEHICLE: return '#E53935'; // Red
       case AssetType.ELECTRONICS: return '#8E24AA'; // Purple
       case AssetType.OTHER: return '#757575'; // Gray
-      default: return '#757575';
+      case AssetType.CUSTOM: {
+        // For custom type, this should never be called directly
+        // but if it is, return gray
+        return '#757575';
+      }
+      default: {
+        // Check if it's a custom asset type ID
+        const customType = customAssetTypes.find(t => t.id === type);
+        if (customType && customType.color) {
+          return customType.color;
+        }
+        return '#757575'; // Default gray
+      }
     }
   }
   
   // Get icon for asset type
-  function getAssetTypeIcon(type: AssetType) {
+  function getAssetTypeIcon(type: AssetType | string, customTypeId?: string) {
+    // For standard asset types
     switch (type) {
       case AssetType.CRYPTOCURRENCY: return <IconCurrencyBitcoin size={16} />;
       case AssetType.STOCK: return <IconChartLine size={16} />;
@@ -115,7 +166,26 @@ export default function AssetsPage() {
       case AssetType.VEHICLE: return <IconCar size={16} />;
       case AssetType.ELECTRONICS: return <IconDeviceLaptop size={16} />;
       case AssetType.OTHER: return <IconCube size={16} />;
-      default: return <IconCube size={16} />;
+      case AssetType.CUSTOM: {
+        // Find the custom type
+        if (customTypeId) {
+          const customType = customAssetTypes.find(t => t.id === customTypeId);
+          if (customType && customType.icon) {
+            // Would use dynamic icon lookup here in a real app
+            return <IconCube size={16} />;
+          }
+        }
+        return <IconCube size={16} />;
+      }
+      default: {
+        // Check if it's a custom asset type ID
+        const customType = customAssetTypes.find(t => t.id === type);
+        if (customType) {
+          // Would use dynamic icon lookup here in a real app
+          return <IconCube size={16} />;
+        }
+        return <IconCube size={16} />;
+      }
     }
   }
   
@@ -161,7 +231,7 @@ export default function AssetsPage() {
                     <ChartTooltip
                       label={item.name}
                       value={formatAmount(item.value)}
-                      color={getAssetTypeColor(item.name as AssetType)}
+                      color={item.color}
                       icon={<IconChartPie size={16} />}
                       secondaryLabel="Percentage"
                       secondaryValue={`${((item.value / assetValues.total) * 100).toFixed(1)}%`}
@@ -177,6 +247,7 @@ export default function AssetsPage() {
           <Card withBorder padding="lg" radius="md">
             <Text fw={500} mb="md">Assets Summary</Text>
             <Stack gap="xs">
+              {/* Standard Asset Types */}
               {Object.entries(ASSET_TYPES).map(([type, info]) => {
                 const assetType = type as AssetType;
                 const value = assetValues[assetType]?.value || 0;
@@ -206,12 +277,47 @@ export default function AssetsPage() {
                   </div>
                 );
               })}
+              
+              {/* Custom Asset Types */}
+              {customAssetTypes.map(customType => {
+                const typeKey = `custom_${customType.id}`;
+                const value = assetValues[typeKey]?.value || 0;
+                const count = assetValues[typeKey]?.count || 0;
+                const percentage = assetValues.total ? (value / assetValues.total) * 100 : 0;
+                
+                return (
+                  <div key={customType.id}>
+                    <Group justify="space-between" mb={5}>
+                      <Group>
+                        <ThemeIcon 
+                          color={customType.color || '#757575'} 
+                          variant="light" 
+                          size="sm"
+                        >
+                          {getAssetTypeIcon(customType.id)}
+                        </ThemeIcon>
+                        <Text size="sm">{customType.name}</Text>
+                      </Group>
+                      <Text size="sm" fw={500}>
+                        {formatAmount(value)} <Text span c="dimmed" size="xs">({count})</Text>
+                      </Text>
+                    </Group>
+                    <Progress 
+                      value={percentage} 
+                      color={customType.color || '#757575'} 
+                      size="sm" 
+                      mb={2}
+                    />
+                    <Text size="xs" ta="right" c="dimmed">{percentage.toFixed(0)}%</Text>
+                  </div>
+                );
+              })}
             </Stack>
           </Card>
         </Grid.Col>
       </Grid>
       
-      <Tabs value={activeTab} onChange={(value) => setActiveTab(value as AssetType | 'all')} mb="md">
+      <Tabs value={activeTab} onChange={(value) => setActiveTab(value as AssetType | 'all' | string)} mb="md">
         <Tabs.List>
           <Tabs.Tab value="all" leftSection={<IconChartPie size={16} />}>
             All Assets
@@ -235,11 +341,34 @@ export default function AssetsPage() {
             Real Estate
           </Tabs.Tab>
           <Tabs.Tab 
+            value={AssetType.VEHICLE} 
+            leftSection={<IconCar size={16} />}
+          >
+            Vehicles
+          </Tabs.Tab>
+          <Tabs.Tab 
+            value={AssetType.ELECTRONICS} 
+            leftSection={<IconDeviceLaptop size={16} />}
+          >
+            Electronics
+          </Tabs.Tab>
+          <Tabs.Tab 
             value={AssetType.OTHER} 
             leftSection={<IconCube size={16} />}
           >
             Other
           </Tabs.Tab>
+          
+          {/* Custom Asset Type Tabs */}
+          {customAssetTypes.map(customType => (
+            <Tabs.Tab 
+              key={customType.id}
+              value={customType.id} 
+              leftSection={getAssetTypeIcon(customType.id)}
+            >
+              {customType.name}
+            </Tabs.Tab>
+          ))}
         </Tabs.List>
       </Tabs>
 
@@ -250,10 +379,39 @@ export default function AssetsPage() {
           <Text size="sm" c="dimmed" mt="sm">
             {activeTab === 'all' 
               ? "You haven't added any assets yet. Click 'Add Asset' to create your first asset."
-              : `You don't have any ${ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]?.name.toLowerCase() || 'assets'} yet.`}
+              : (() => {
+                  // For standard asset types
+                  if (ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]) {
+                    return `You don't have any ${ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]?.name.toLowerCase() || 'assets'} yet.`;
+                  }
+                  
+                  // For custom asset types
+                  const customType = customAssetTypes.find(t => t.id === activeTab);
+                  if (customType) {
+                    return `You don't have any ${customType.name.toLowerCase()} assets yet.`;
+                  }
+                  
+                  return "You don't have any assets in this category yet.";
+                })()
+              }
           </Text>
           <Button mt="xl" leftSection={<IconPlus size={16} />} onClick={open}>
-            Add {activeTab === 'all' ? 'Asset' : (ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]?.name || 'Asset')}
+            Add {(() => {
+              if (activeTab === 'all') return 'Asset';
+              
+              // For standard asset types
+              if (ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]) {
+                return ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]?.name || 'Asset';
+              }
+              
+              // For custom asset types
+              const customType = customAssetTypes.find(t => t.id === activeTab);
+              if (customType) {
+                return customType.name;
+              }
+              
+              return 'Asset';
+            })()}
           </Button>
         </Card>
       ) : (
@@ -275,13 +433,28 @@ export default function AssetsPage() {
             const profitLossPercentage = acquisitionValue && acquisitionValue > 0
               ? ((currentValue - acquisitionValue) / acquisitionValue) * 100
               : undefined;
+              
+            // Get custom asset type if applicable
+            let assetTypeColor = getAssetTypeColor(asset.type);
+            let assetTypeIcon = getAssetTypeIcon(asset.type, asset.customTypeId);
+            let assetTypeName = ASSET_TYPES[asset.type as keyof typeof ASSET_TYPES]?.name || 'Other';
+            
+            if (asset.type === AssetType.CUSTOM && asset.customTypeId) {
+              const customType = customAssetTypes.find(t => t.id === asset.customTypeId);
+              if (customType) {
+                assetTypeName = customType.name;
+                if (customType.color) {
+                  assetTypeColor = customType.color;
+                }
+              }
+            }
             
             return (
               <Card key={asset.id} withBorder padding="lg" radius="md">
                 <Group justify="space-between" mb="xs">
                   <Group>
-                    <ThemeIcon color={getAssetTypeColor(asset.type)} variant="light">
-                      {getAssetTypeIcon(asset.type)}
+                    <ThemeIcon color={assetTypeColor} variant="light">
+                      {assetTypeIcon}
                     </ThemeIcon>
                     <Text fw={500}>{asset?.name}</Text>
                   </Group>
@@ -382,7 +555,8 @@ export default function AssetsPage() {
         <AssetForm 
           asset={editAsset} 
           onClose={handleCloseModal} 
-          initialType={activeTab !== 'all' ? activeTab : undefined}
+          initialType={activeTab !== 'all' && !customAssetTypes.some(t => t.id === activeTab) ? activeTab as AssetType : undefined}
+          customTypeId={customAssetTypes.some(t => t.id === activeTab) ? activeTab : undefined}
         />
       </Modal>
     </Container>
