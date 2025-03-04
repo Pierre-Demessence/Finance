@@ -17,8 +17,8 @@
   * Balance History is empty. It says "Balance data available for 3 date points" even tho there are more than 3 transactions with different dates.
 
 * Transaction Form
-  * When editing a transaction, the Category is not retained.
-  * When editing a transfer transaction, the "To Account" is not retained.
+  * ✓ When editing a transaction, the Category is not retained.
+  * ✓ When editing a transfer transaction, the "To Account" is not retained.
 
 * Assets Page:
   * Editing an asset to change the acquisition date doesn't save the date.

@@ -82,47 +82,36 @@ export default function TransactionForm({
     if (transaction) {
       setType(transaction.type);
       setAmount(transaction.amount);
-      
-      // Ensure date is a proper Date object
-      if (transaction.date) {
-        // Convert string date to Date object if needed
-        const transactionDate = transaction.date instanceof Date
-          ? transaction.date
-          : new Date(transaction.date);
-        
-        // Check if valid date before setting
-        if (!isNaN(transactionDate.getTime())) {
-          setDate(transactionDate);
-        } else {
-          // Fallback to current date if invalid
-          setDate(new Date());
-          console.warn('Invalid date detected in transaction, using current date instead');
-        }
-      } else {
-        setDate(new Date());
-      }
-      
+      setDate(transaction.date);
       setDescription(transaction.description || '');
-      setCategoryId(transaction.categoryId);
-      setFromAccountId(transaction.fromAccountId || null);
-      setToAccountId(transaction.toAccountId || null);
+      // Set category without resetting it
+      setCategoryId(transaction.categoryId || '');
+      // Set accounts without resetting them based on type
+      if (transaction.fromAccountId) {
+        setFromAccountId(transaction.fromAccountId);
+      }
+      if (transaction.toAccountId) {
+        setToAccountId(transaction.toAccountId);
+      }
       setNotes(transaction.notes || '');
       setTags(transaction.tags || []);
       setIsRecurring(transaction.isRecurring || false);
     }
   }, [transaction]);
   
-  // Update account fields when transaction type changes
+  // Update account fields when transaction type changes, but only for new transactions
   useEffect(() => {
-    if (type === TransactionType.EXPENSE) {
-      setToAccountId(null);
-    } else if (type === TransactionType.INCOME) {
-      setFromAccountId(null);
+    if (!transaction) {
+      if (type === TransactionType.EXPENSE) {
+        setToAccountId(null);
+      } else if (type === TransactionType.INCOME) {
+        setFromAccountId(null);
+      }
+      
+      // Reset categoryId when changing transaction type only for new transactions
+      setCategoryId('');
     }
-    
-    // Reset categoryId when changing transaction type
-    setCategoryId('');
-  }, [type]);
+  }, [type, transaction]);
   
   // Filter categories based on transaction type
   const filteredCategories = transactionCategories.filter(
