@@ -240,7 +240,7 @@ export default function Dashboard() {
           <Card withBorder padding="lg" radius="md">
             <Text fw={500} mb="md">Net Worth Over Time</Text>
             <AreaChart
-              h={250}
+              h={300}
               data={netWorthData}
               dataKey="date"
               series={[{ name: 'value', color: 'blue.6' }]}
