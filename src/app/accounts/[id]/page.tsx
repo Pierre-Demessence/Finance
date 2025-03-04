@@ -41,7 +41,7 @@ import { AccountCategory, Transaction } from '@/models';
 
 export default function AccountDetailsPage({ params }: { params: { id: string } }) {
   const accountId = use(Promise.resolve(params.id));
-  const { accounts, transactions, accountCategories, transactionCategories, deleteAccount, archiveAccount } = useFinanceStore();
+  const { accounts, transactions, accountCategories, transactionCategories, deleteAccount, archiveAccount, unarchiveAccount } = useFinanceStore();
   const { formatAmount } = useCurrency();
   const { calculateAccountBalance } = useNetWorth();
   
@@ -139,6 +139,16 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
       color: 'blue',
     });
   };
+
+  // Handle account unarchive
+  const handleUnarchiveAccount = () => {
+    unarchiveAccount(account.id);
+    notifications.show({
+      title: 'Account Unarchived',
+      message: `"${account.name}" has been unarchived.`,
+      color: 'blue',
+    });
+  };
   
   // Handle account delete confirmation
   const handleDeleteConfirm = () => {
@@ -211,7 +221,14 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
                 >
                   Archive Account
                 </Menu.Item>
-              ) : null}
+              ) : (
+                <Menu.Item 
+                  leftSection={<IconHistory size={14} />}
+                  onClick={handleUnarchiveAccount}
+                >
+                  Unarchive Account
+                </Menu.Item>
+              )}
               <Menu.Item 
                 leftSection={<IconTrash size={14} />}
                 color="red"

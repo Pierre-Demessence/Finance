@@ -27,6 +27,7 @@ export interface FinanceStore {
   updateAccount: (id: string, updates: Partial<Omit<Account, 'id' | 'createdAt' | 'updatedAt'>>) => boolean;
   deleteAccount: (id: string) => boolean;
   archiveAccount: (id: string) => boolean;
+  unarchiveAccount: (id: string) => boolean;
   
   // Account Categories
   addAccountCategory: (category: Omit<AccountCategory, 'id' | 'isDefault'>) => string;
@@ -171,6 +172,10 @@ export const useFinanceStore = create<FinanceStore>()(
       
       archiveAccount: (id) => {
         return get().updateAccount(id, { isArchived: true });
+      },
+
+      unarchiveAccount: (id) => {
+        return get().updateAccount(id, { isArchived: false });
       },
       
       // Account Category functions

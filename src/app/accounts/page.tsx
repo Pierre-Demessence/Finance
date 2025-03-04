@@ -43,7 +43,7 @@ import Link from 'next/link';
 import { notifications } from '@mantine/notifications';
 
 export default function AccountsPage() {
-  const { accounts, accountCategories, deleteAccount, archiveAccount } = useFinanceStore();
+  const { accounts, accountCategories, deleteAccount, archiveAccount, unarchiveAccount } = useFinanceStore();
   const { formatAmount } = useCurrency();
   const { calculateAccountBalance } = useNetWorth();
   
@@ -99,6 +99,16 @@ export default function AccountsPage() {
     notifications.show({
       title: 'Account Archived',
       message: `"${account.name}" has been archived.`,
+      color: 'blue',
+    });
+  };
+
+  // Handle account unarchive
+  const handleUnarchiveAccount = (account: Account) => {
+    unarchiveAccount(account.id);
+    notifications.show({
+      title: 'Account Unarchived',
+      message: `"${account.name}" has been unarchived.`,
       color: 'blue',
     });
   };
@@ -318,7 +328,14 @@ export default function AccountsPage() {
                               >
                                 Archive
                               </Menu.Item>
-                            ) : null}
+                            ) : (
+                              <Menu.Item 
+                                leftSection={<IconWallet size={14} />}
+                                onClick={() => handleUnarchiveAccount(account)}
+                              >
+                                Unarchive
+                              </Menu.Item>
+                            )}
                             <Menu.Item 
                               leftSection={<IconTrash size={14} />}
                               color="red"
