@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import {
   Title,
   Container,
@@ -28,6 +28,7 @@ import {
   IconArrowDown,
   IconDotsVertical,
 } from '@tabler/icons-react';
+import { LineChart } from '@mantine/charts';
 import { useFinanceStore } from '@/store/financeStore';
 import { useDisclosure } from '@mantine/hooks';
 import { useCurrency, useNetWorth } from '@/hooks/useFinanceUtils';
@@ -39,7 +40,7 @@ import { redirect } from 'next/navigation';
 import { AccountCategory, Transaction } from '@/models';
 
 export default function AccountDetailsPage({ params }: { params: { id: string } }) {
-  const accountId = params.id;
+  const accountId = use(Promise.resolve(params.id));
   const { accounts, transactions, accountCategories, transactionCategories, deleteAccount, archiveAccount } = useFinanceStore();
   const { formatAmount } = useCurrency();
   const { calculateAccountBalance } = useNetWorth();
@@ -73,20 +74,37 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
   const balance = calculateAccountBalance(accountId);
   const category = accountCategories.find((c: AccountCategory) => c.id === account.categoryId);
   
-  // Chart data for balance history - Simplified to avoid errors
-  const balanceHistory = accountTransactions.reduce((timeline: {date: string, balance: number}[], transaction) => {
-    const date = new Date(transaction.date).toISOString().split('T')[0];
-    const amount = transaction.fromAccountId === accountId ? -transaction.amount : transaction.amount;
-    
-    const existingDateIndex = timeline.findIndex(entry => entry.date === date);
-    if (existingDateIndex >= 0) {
-      timeline[existingDateIndex].balance += amount;
-    } else {
-      timeline.push({ date, balance: amount });
+  // Chart data for balance history
+  const balanceHistory = accountTransactions
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by date ascending
+    .reduce((timeline: {date: string, balance: number}[], transaction) => {
+      const date = new Date(transaction.date).toISOString().split('T')[0];
+      const amount = transaction.fromAccountId === accountId ? -transaction.amount : transaction.amount;
+      
+      // Get the previous balance
+      const prevBalance = timeline.length > 0 
+        ? timeline[timeline.length - 1].balance 
+        : (account.initialBalance || 0);
+      
+      // Add new balance point with accumulated balance
+      timeline.push({ 
+        date, 
+        balance: prevBalance + amount 
+      });
+      
+      return timeline;
+    }, []);
+
+  if (balanceHistory.length > 0) {
+    // Ensure we start with initial balance point
+    const firstDate = balanceHistory[0].date;
+    if (account.initialBalance) {
+      balanceHistory.unshift({
+        date: new Date(new Date(firstDate).getTime() - 86400000).toISOString().split('T')[0], // day before first transaction
+        balance: account.initialBalance
+      });
     }
-    
-    return timeline;
-  }, []).sort((a, b) => a.date.localeCompare(b.date));
+  }
     
   // Handle account edit
   const handleEditAccount = () => {
@@ -327,10 +345,21 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
                 <Text c="dimmed" size="sm" mb="md">
                   Chart showing account balance over time
                 </Text>
-                {/* Chart would go here - simplified for now */}
-                <Text size="sm">
-                  Balance data available for {balanceHistory.length} date points
-                </Text>
+                <LineChart
+                  h={300}
+                  data={balanceHistory}
+                  dataKey="date"
+                  series={[{ name: 'balance', color: 'blue.6' }]}
+                  curveType="natural"
+                  withLegend={false}
+                  gridAxis="xy"
+                  valueFormatter={(value: number) => formatAmount(value, account.currency)}
+                  yAxisProps={{
+                    tickFormatter: (value: number) => formatAmount(value, account.currency),
+                    width: 100
+                  }}
+                  p={20}
+                />
               </div>
             )}
           </Card>

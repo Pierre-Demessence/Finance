@@ -42,6 +42,7 @@ export interface Account extends BaseModel {
   categoryId: string;
   currency: string;
   isArchived: boolean;
+  initialBalance?: number;
   notes?: string;
 }
 

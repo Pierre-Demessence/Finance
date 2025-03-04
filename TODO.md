@@ -14,7 +14,7 @@
   * ✓ Income and Expenses tab are empty
 
 * Account Details Page:
-  * Balance History is empty. It says "Balance data available for 3 date points" even tho there are more than 3 transactions with different dates.
+  * ✓ Balance History is empty. It says "Balance data available for 3 date points" even tho there are more than 3 transactions with different dates.
 
 * Transaction Form
   * ✓ When editing a transaction, the Category is not retained.
@@ -43,3 +43,6 @@
       - Record account balance at a specific date
       - Used as reference points for historical balances
       - Override previous transaction calculations
+
+  * Demo Data
+  * Allow to unarchive an account
