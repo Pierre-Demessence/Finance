@@ -16,8 +16,6 @@ export default function RootLayout({
 }) {
   const { settings } = useFinanceStore();
 
-  console.log(settings?.theme);
-
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
