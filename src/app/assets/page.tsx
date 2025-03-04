@@ -41,6 +41,7 @@ import { useCurrency } from '@/hooks/useFinanceUtils';
 import { Asset, AssetType } from '@/models';
 import { ASSET_TYPES } from '@/config/constants';
 import AssetForm from '@/components/AssetForm';
+import ChartTooltip from '@/components/ChartTooltip';
 
 export default function AssetsPage() {
   const [opened, { open, close }] = useDisclosure(false);
@@ -153,14 +154,16 @@ export default function AssetsPage() {
               withLabels
               withTooltip
               tooltipProps={{
-                // @ts-ignore - Mantine Charts type issue
                 content: ({ payload }) => {
                   if (!payload?.length) return null;
+                  const item = payload[0].payload;
                   return (
-                    <div>
-                      <Text>{payload[0].payload.name}</Text>
-                      <Text>{formatAmount(payload[0].payload.value)}</Text>
-                    </div>
+                    <ChartTooltip
+                      label={item.name}
+                      value={formatAmount(item.value)}
+                      color={getAssetTypeColor(item.name as AssetType)}
+                      icon={<IconChartPie size={16} />}
+                    />
                   );
                 },
               }}

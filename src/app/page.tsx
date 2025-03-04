@@ -25,7 +25,8 @@ import {
   IconCash,
   IconChartPie,
   IconChartBar,
-  IconPlus
+  IconPlus,
+  IconChartLine
 } from '@tabler/icons-react';
 import { AreaChart, BarChart, DonutChart } from '@mantine/charts';
 import Link from 'next/link';
@@ -34,6 +35,7 @@ import { useCurrency, useNetWorth, useTransactionAnalysis } from '@/hooks/useFin
 import dayjs from 'dayjs';
 import AccountForm from '@/components/AccountForm';
 import TransactionForm from '@/components/TransactionForm';
+import ChartTooltip from '@/components/ChartTooltip';
 
 export default function Dashboard() {
   const { accounts, transactions, assets, transactionCategories } = useFinanceStore();
@@ -248,10 +250,12 @@ export default function Dashboard() {
                 content: ({ payload }) => {
                   if (!payload?.length) return null;
                   return (
-                    <div>
-                      <Text fw={500}>{payload[0].payload.date}</Text>
-                      <Text>{formatAmount(payload[0].value as number)}</Text>
-                    </div>
+                    <ChartTooltip
+                      label={payload[0].payload.date}
+                      value={formatAmount(payload[0].value as number)}
+                      icon={<IconChartLine size={16} />}
+                      color="blue.6"
+                    />
                   );
                 },
               }}
@@ -273,10 +277,12 @@ export default function Dashboard() {
                     if (!payload?.length) return null;
                     const item = payload[0].payload;
                     return (
-                      <div>
-                        <Text>{item.name}</Text>
-                        <Text>{formatAmount(item.value)}</Text>
-                      </div>
+                      <ChartTooltip
+                        label={item.name}
+                        value={formatAmount(item.value)}
+                        color={item.color}
+                        icon={<IconChartPie size={16} />}
+                      />
                     );
                   },
                 }}
