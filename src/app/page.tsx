@@ -36,8 +36,8 @@ import TransactionForm from '@/components/TransactionForm';
 
 export default function Dashboard() {
   const { accounts, transactions, assets, transactionCategories } = useFinanceStore();
-  const { formatAmount } = useCurrency();
-  const { calculateNetWorth, getNetWorthHistory } = useNetWorth();
+  const { formatAmount, toBaseCurrency } = useCurrency();
+  const { calculateNetWorth, getNetWorthHistory, calculateAccountBalance } = useNetWorth();
   const { 
     calculateTotalIncome, 
     calculateTotalExpenses, 
@@ -167,8 +167,9 @@ export default function Dashboard() {
               <Stack gap={0}>
                 <Text fw={700} size="xl">
                   {formatAmount(accounts.reduce((total, acc) => {
-                    // In a real app, calculate actual balance
-                    return total + 0; // Placeholder
+                    if (acc.isArchived) return total;
+                    const balance = calculateAccountBalance(acc.id);
+                    return total + toBaseCurrency(balance, acc.currency);
                   }, 0))}
                 </Text>
                 <Text size="xs" c="dimmed">Total Balance</Text>
@@ -292,8 +293,8 @@ export default function Dashboard() {
           {transactions.length > 0 ? (
             <Stack gap="xs">
               {transactions
-                .filter(t => t.date >= startDate)
-                .sort((a, b) => b.date.getTime() - a.date.getTime())
+                .filter(t => dayjs(t.date).isAfter(startDate) || dayjs(t.date).isSame(startDate))
+                .sort((a, b) => dayjs(b.date).valueOf() - dayjs(a.date).valueOf())
                 .slice(0, 5)
                 .map(transaction => {
                   const category = transactionCategories.find(c => c.id === transaction.categoryId);
@@ -305,7 +306,7 @@ export default function Dashboard() {
                             {category?.name || 'Uncategorized'}
                           </Text>
                           <Text size="xs" c="dimmed">
-                            {transaction.date.toLocaleDateString()}
+                            {dayjs(transaction.date).format('MMM D, YYYY')}
                           </Text>
                         </Stack>
                         <Text 

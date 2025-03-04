@@ -103,8 +103,8 @@ export function useTransactionAnalysis() {
     return transactions
       .filter(t => 
         t.type === TransactionType.INCOME &&
-        t.date >= startDate &&
-        t.date <= endDate
+        (dayjs(t.date).isAfter(startDate, 'day') || dayjs(t.date).isSame(startDate, 'day')) &&
+        (dayjs(t.date).isBefore(endDate, 'day') || dayjs(t.date).isSame(endDate, 'day'))
       )
       .reduce((sum, t) => sum + t.amount, 0);
   };
@@ -118,8 +118,8 @@ export function useTransactionAnalysis() {
     return transactions
       .filter(t => 
         t.type === TransactionType.EXPENSE &&
-        t.date >= startDate &&
-        t.date <= endDate
+        (dayjs(t.date).isAfter(startDate, 'day') || dayjs(t.date).isSame(startDate, 'day')) &&
+        (dayjs(t.date).isBefore(endDate, 'day') || dayjs(t.date).isSame(endDate, 'day'))
       )
       .reduce((sum, t) => sum + t.amount, 0);
   };
@@ -144,8 +144,8 @@ export function useTransactionAnalysis() {
     return transactions
       .filter(t => 
         (transactionType === undefined || t.type === transactionType) &&
-        t.date >= startDate &&
-        t.date <= endDate
+        dayjs(t.date).isAfter(startDate, 'day') || dayjs(t.date).isSame(startDate, 'day') &&
+        dayjs(t.date).isBefore(endDate, 'day') || dayjs(t.date).isSame(endDate, 'day')
       )
       .reduce((acc, t) => {
         if (!acc[t.categoryId]) {
@@ -336,9 +336,37 @@ export function useNetWorth() {
     
     // Function to calculate net worth at a specific date
     const calculateNetWorthAtDate = (date: Date): number => {
-      // For this simplified version, we'll just use the current net worth
-      // In a real app, you would calculate based on transactions up to that date
-      return calculateNetWorth();
+      let netWorth = 0;
+      
+      // Only include transactions up to this date
+      const relevantTransactions = transactions.filter(t => 
+        dayjs(t.date).isBefore(date, 'day') || dayjs(t.date).isSame(date, 'day')
+      );
+      
+      // Calculate account balances up to this date
+      accounts.forEach(account => {
+        const balance = relevantTransactions.reduce((sum, t) => {
+          if (t.fromAccountId === account.id) {
+            return sum - t.amount;
+          } else if (t.toAccountId === account.id) {
+            return sum + t.amount;
+          }
+          return sum;
+        }, 0);
+        netWorth += toBaseCurrency(balance, account.currency);
+      });
+      
+      // Add asset values - assuming assets are valued at their current price
+      // In a real app, you'd want to track historical asset prices
+      assets.forEach(asset => {
+        const account = accounts.find(a => a.id === asset.accountId);
+        if (account) {
+          const assetValue = asset.quantity * asset.currentPrice;
+          netWorth += toBaseCurrency(assetValue, account.currency);
+        }
+      });
+      
+      return netWorth;
     };
     
     // Generate data points based on interval

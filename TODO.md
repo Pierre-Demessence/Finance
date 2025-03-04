@@ -1,0 +1,41 @@
+# Bug to Fix:
+
+* Dashboard/Homepage
+  * ✓ Recent Transactions is empty
+  * ✓ Expenses by Category is empty
+  * ✓ Accounts Total Balance shows 0 even if some account has a non 0 balance
+  * ✓ Cash Flow (30d) shows 0 even if there are transactions
+  * ✓ Net Worth tab doesn't show the proper value per date (it always shows the most recent one).
+
+* Reports Page
+  * ✓ Net Cash Flow, Total Income, Total Expenses show 0 even if there are transactionsd.
+  * ✓ Net Worth tab doesn't show the proper value per date (it always shows the most recent one).
+  * ✓ Income and Expenses tab are empty
+
+* Account Details Page:
+  * Balance History is empty. It says "Balance data available for 3 date points" even tho there are more than 3 transactions with different dates.
+
+* Transaction Form
+  * When editing a transaction, the Category is not retained.
+  * When editing a transfer transaction, the "To Account" is not retained.
+
+* Assets Page:
+  * Editing an asset to change the acquisition date doesn't save the date.
+
+
+# Features to Implements:
+* Dashboard/Homepage
+  * Clicking on the Accounts and Assets cards should link to the proper page.
+  * Add the total assets value to the Asset card
+
+* Transactions List:
+  * Clicking on the Account name should link to the Account Details Page.
+
+* Account Details Page:
+  * Clicking on the Account name in the "From/To" column should link to the Account Details Page (not when it's External of course).
+
+* System:
+  * Implement Account Records:
+      - Record account balance at a specific date
+      - Used as reference points for historical balances
+      - Override previous transaction calculations
