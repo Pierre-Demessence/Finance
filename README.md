@@ -1,8 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Finance - Personal Finance Management Application
+
+A comprehensive personal finance management application built with Next.js that allows you to track accounts, assets, transactions, and monitor your net worth over time across multiple currencies and asset types.
+
+## Features
+
+### Account Management
+- Create and manage financial accounts (banking, investments, credit cards, etc.)
+- Archive accounts you no longer actively use
+- Organize accounts by customizable categories
+- Track account balances over time
+
+### Transaction Tracking
+- Record income, expenses, and transfers between accounts
+- Categorize transactions for better financial insights
+- View transaction history by account or category
+- Attach additional information like descriptions or notes
+
+### Asset Management
+- Track various asset types (cryptocurrency, stocks, real estate, etc.)
+- Record acquisition date and purchase price
+- Update current valuations
+- Include assets in your overall net worth calculation
+
+### Financial Reporting
+- View your net worth over time
+- Analyze income and expense trends
+- Break down spending by categories
+- Visualize your financial data through interactive charts
+
+### Multi-Currency Support
+- Track accounts and transactions in different currencies
+- Automatic conversion to your base currency
+- Historical and current exchange rate support
+
+## Technology Stack
+
+- **Framework**: [Next.js](https://nextjs.org/) (React)
+- **UI Library**: [Mantine UI](https://mantine.dev/)
+- **Charts**: [Mantine Charts](https://mantine.dev/charts/getting-started/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Data Persistence**: Local storage (browser-based)
 
 ## Getting Started
 
-First, run the development server:
+First, install the dependencies:
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
@@ -10,27 +61,29 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Create Accounts**: Start by setting up your financial accounts
+2. **Add Transactions**: Record your income and expenses
+3. **Track Assets**: Add any assets you own
+4. **View Reports**: Analyze your financial situation through the reports section
+5. **Adjust Settings**: Customize the application to your preferences in the settings page
 
-## Learn More
+## Development
 
-To learn more about Next.js, take a look at the following resources:
+This project uses TypeScript for type safety and follows the Next.js App Router architecture. The main components of the application are:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/src/app/*` - Page components
+- `/src/components/*` - Reusable UI components
+- `/src/store/*` - Zustand store for state management
+- `/src/hooks/*` - Custom React hooks
+- `/src/models/*` - TypeScript interfaces and type definitions
+- `/src/config/*` - Application configuration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[MIT](LICENSE)
