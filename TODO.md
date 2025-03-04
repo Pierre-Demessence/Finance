@@ -22,6 +22,7 @@
 
 * Assets Page:
   * ✓ Editing an asset to change the acquisition date doesn't save the date.
+  * Other tab doesn't work
 
 * Others:
   * Fix theme selection flickering on page load. (It starts with light theme, then swith to dark theme)
@@ -38,12 +39,15 @@
 * Account Details Page:
   * ✓ Clicking on the Account name in the "From/To" column should link to the Account Details Page (not when it's External of course).
 
+* Reports Page:
+  * Modify Top Income/Expense Categories so it looks like the Assets Summary card in the Assets Page.
+
 * System:
   * Implement Account Records:
       - Record account balance at a specific date
       - Used as reference points for historical balances
       - Override previous transaction calculations
 
-  * Demo Data
+  * ✓ Demo Data
   * ✓ Allow to unarchive an account
   * ✓ Rework README

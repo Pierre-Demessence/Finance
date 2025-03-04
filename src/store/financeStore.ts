@@ -14,6 +14,7 @@ import {
   AssetType
 } from '@/models';
 import { CURRENCIES } from '@/config/constants';
+import demoData from '@/data/demoData.json';
 
 export interface FinanceStore {
   // Settings
@@ -56,6 +57,7 @@ export interface FinanceStore {
   exportData: () => object;
   importData: (data: any) => boolean;
   resetData: () => void;
+  loadDemoData: () => void;
 }
 
 // Default settings
@@ -459,6 +461,143 @@ export const useFinanceStore = create<FinanceStore>()(
           assets: [],
         }));
       },
+
+      loadDemoData: () => {
+        // First reset to remove any existing data
+        get().resetData();
+        
+        const now = new Date();
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(now.getFullYear() - 1);
+        
+        // Create a map to store the actual UUIDs for account IDs
+        const accountIdMap: Record<string, string> = {};
+        
+        // Helper function to create a date in the past
+        const getDateInPast = (daysAgo: number): Date => {
+          const date = new Date();
+          date.setDate(date.getDate() - daysAgo);
+          return date;
+        };
+        
+        // Create demo accounts from the JSON data
+        const demoAccounts: Account[] = demoData.accounts.map(account => {
+          const id = uuidv4();
+          // Store the mapping between placeholder ID and actual UUID
+          accountIdMap[account.id] = id;
+          
+          return {
+            ...account,
+            id,
+            createdAt: oneYearAgo,
+            updatedAt: now
+          };
+        });
+        
+        // Generate transactions for the past year
+        const demoTransactions: Transaction[] = [];
+        
+        // Add monthly recurring transactions for the past 12 months
+        for (let i = 0; i < 12; i++) {
+          for (const recurTrans of demoData.recurringTransactions) {
+            const transactionDate = new Date();
+            transactionDate.setMonth(now.getMonth() - i);
+            transactionDate.setDate(recurTrans.dayOfMonth);
+            
+            // Skip future dates
+            if (transactionDate > now) continue;
+
+            demoTransactions.push({
+              id: uuidv4(),
+              type: recurTrans.type as TransactionType,
+              amount: recurTrans.amount,
+              date: transactionDate,
+              categoryId: recurTrans.categoryId,
+              description: recurTrans.description,
+              fromAccountId: recurTrans.fromAccountId ? accountIdMap[recurTrans.fromAccountId] : null,
+              toAccountId: recurTrans.toAccountId ? accountIdMap[recurTrans.toAccountId] : null,
+              createdAt: transactionDate,
+              updatedAt: transactionDate,
+            });
+          }
+        }
+        
+        // Add random expenses over the past year using the data from JSON
+        for (let i = 0; i < 50; i++) {
+          const daysAgo = Math.floor(Math.random() * 365);
+          const transactionDate = getDateInPast(daysAgo);
+          
+          const expenseType = demoData.randomExpenses[Math.floor(Math.random() * demoData.randomExpenses.length)];
+          const amount = expenseType.min + Math.floor(Math.random() * (expenseType.max - expenseType.min));
+          const description = expenseType.descriptions[Math.floor(Math.random() * expenseType.descriptions.length)];
+          
+          demoTransactions.push({
+            id: uuidv4(),
+            type: TransactionType.EXPENSE,
+            amount: amount,
+            date: transactionDate,
+            categoryId: expenseType.category,
+            description: description,
+            fromAccountId: accountIdMap.creditcard,
+            toAccountId: null,
+            createdAt: transactionDate,
+            updatedAt: transactionDate,
+          });
+        }
+        
+        // Add medical expenses from the JSON data
+        for (const medExpense of demoData.medicalExpenses) {
+          const transactionDate = getDateInPast(medExpense.daysAgo);
+          const amount = medExpense.minAmount + Math.floor(Math.random() * (medExpense.maxAmount - medExpense.minAmount));
+          
+          demoTransactions.push({
+            id: uuidv4(),
+            type: TransactionType.EXPENSE,
+            amount: amount,
+            date: transactionDate,
+            categoryId: medExpense.categoryId,
+            description: medExpense.description,
+            fromAccountId: accountIdMap[medExpense.fromAccountId],
+            toAccountId: null,
+            createdAt: transactionDate,
+            updatedAt: transactionDate,
+          });
+        }
+        
+        // Create Assets from the JSON data
+        const demoAssets: Asset[] = demoData.assets.map(asset => {
+          const purchaseDate = getDateInPast(asset.acquisitionDateDaysAgo);
+          return {
+            id: uuidv4(),
+            name: asset.name,
+            type: asset.type as AssetType,
+            accountId: accountIdMap[asset.accountId],
+            description: asset.description,
+            quantity: asset.quantity,
+            currentPrice: asset.currentPrice,
+            acquisitionPrice: asset.acquisitionPrice,
+            acquisitionDate: purchaseDate,
+            lastUpdated: now,
+            notes: asset.notes,
+            symbol: asset.symbol,
+            purchasePrice: asset.purchasePrice,
+            purchaseDate: purchaseDate,
+            createdAt: purchaseDate,
+            updatedAt: now,
+          };
+        });
+        
+        // Set all data at once
+        set(() => ({
+          accounts: demoAccounts,
+          transactions: demoTransactions,
+          assets: demoAssets,
+          // Keep default categories and settings
+          accountCategories: DEFAULT_ACCOUNT_CATEGORIES,
+          transactionCategories: DEFAULT_TRANSACTION_CATEGORIES,
+          settings: DEFAULT_SETTINGS,
+        }));
+      }
     }),
     {
       name: 'finance-store',

@@ -36,6 +36,7 @@ import {
   IconDownload,
   IconUpload,
   IconTrashX,
+  IconDatabase,
 } from '@tabler/icons-react';
 import { useFinanceStore } from '@/store/financeStore';
 import { CURRENCIES } from '@/config/constants';
@@ -51,6 +52,7 @@ export default function SettingsPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [demoDataLoaded, setDemoDataLoaded] = useState(false);
   
   // Create a reference to the file input element for importing data
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +70,8 @@ export default function SettingsPage() {
     deleteTransactionCategory,
     exportData,
     importData,
-    resetData
+    resetData,
+    loadDemoData
   } = useFinanceStore();
   
   // Form for adding/editing categories
@@ -161,6 +164,13 @@ export default function SettingsPage() {
     confirmReset.close();
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
+  };
+  
+  // Handle loading demo data
+  const handleLoadDemoData = () => {
+    loadDemoData();
+    setDemoDataLoaded(true);
+    setTimeout(() => setDemoDataLoaded(false), 3000);
   };
   
   // Date format options
@@ -589,6 +599,17 @@ export default function SettingsPage() {
               </Alert>
             )}
             
+            {demoDataLoaded && (
+              <Alert 
+                icon={<IconCheck size="1rem" />} 
+                title="Demo Data Loaded!" 
+                color="green" 
+                mb="md"
+              >
+                Sample data has been successfully loaded into the application.
+              </Alert>
+            )}
+            
             {importSuccess === false && importError && (
               <Alert 
                 icon={<IconX size="1rem" />} 
@@ -625,6 +646,15 @@ export default function SettingsPage() {
                 onClick={handleImportClick}
               >
                 Import Data
+              </Button>
+              
+              <Button 
+                leftSection={<IconDatabase size="1rem" />}
+                variant="outline" 
+                color="green"
+                onClick={handleLoadDemoData}
+              >
+                Load Demo Data
               </Button>
               
               {/* Hidden file input for import */}

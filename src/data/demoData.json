@@ -1,0 +1,227 @@
+{
+  "accounts": [
+    {
+      "id": "checking",
+      "name": "Main Checking",
+      "description": "Primary checking account",
+      "categoryId": "cat_banking",
+      "currency": "EUR",
+      "isArchived": false,
+      "initialBalance": 2500
+    },
+    {
+      "id": "savings",
+      "name": "Savings Account",
+      "description": "Emergency fund & savings",
+      "categoryId": "cat_banking",
+      "currency": "EUR",
+      "isArchived": false,
+      "initialBalance": 10000
+    },
+    {
+      "id": "investment",
+      "name": "Investment Portfolio",
+      "description": "Stocks, ETFs & bonds",
+      "categoryId": "cat_investment",
+      "currency": "USD",
+      "isArchived": false,
+      "initialBalance": 5000
+    },
+    {
+      "id": "creditcard",
+      "name": "Credit Card",
+      "description": "Main credit card",
+      "categoryId": "cat_credit",
+      "currency": "EUR",
+      "isArchived": false,
+      "initialBalance": 0
+    },
+    {
+      "id": "cash",
+      "name": "Cash Wallet",
+      "description": "Physical cash",
+      "categoryId": "cat_cash",
+      "currency": "EUR",
+      "isArchived": false,
+      "initialBalance": 200
+    },
+    {
+      "id": "loan",
+      "name": "Car Loan",
+      "description": "Auto loan",
+      "categoryId": "cat_loan",
+      "currency": "EUR",
+      "isArchived": false,
+      "initialBalance": -15000
+    }
+  ],
+  "recurringTransactions": [
+    {
+      "description": "Monthly Salary",
+      "type": "income",
+      "amount": 3200,
+      "categoryId": "tcat_salary",
+      "toAccountId": "checking",
+      "fromAccountId": null,
+      "dayOfMonth": 25
+    },
+    {
+      "description": "Rent Payment",
+      "type": "expense",
+      "amount": 900,
+      "categoryId": "tcat_housing",
+      "fromAccountId": "checking",
+      "toAccountId": null,
+      "dayOfMonth": 1
+    },
+    {
+      "description": "Electric & Water",
+      "type": "expense",
+      "amount": 150,
+      "categoryId": "tcat_utilities",
+      "fromAccountId": "checking",
+      "toAccountId": null,
+      "dayOfMonth": 5
+    },
+    {
+      "description": "Internet & Phone",
+      "type": "expense",
+      "amount": 60,
+      "categoryId": "tcat_utilities",
+      "fromAccountId": "checking",
+      "toAccountId": null,
+      "dayOfMonth": 10
+    },
+    {
+      "description": "Groceries",
+      "type": "expense",
+      "amount": 350,
+      "categoryId": "tcat_food",
+      "fromAccountId": "checking",
+      "toAccountId": null,
+      "dayOfMonth": 8
+    },
+    {
+      "description": "Groceries",
+      "type": "expense",
+      "amount": 320,
+      "categoryId": "tcat_food",
+      "fromAccountId": "checking",
+      "toAccountId": null,
+      "dayOfMonth": 22
+    },
+    {
+      "description": "Car Payment",
+      "type": "expense",
+      "amount": 200,
+      "categoryId": "tcat_transportation",
+      "fromAccountId": "checking",
+      "toAccountId": null,
+      "dayOfMonth": 15
+    },
+    {
+      "description": "Credit Card Payment",
+      "type": "transfer",
+      "amount": 500,
+      "categoryId": "tcat_transfer",
+      "fromAccountId": "checking",
+      "toAccountId": "creditcard",
+      "dayOfMonth": 20
+    },
+    {
+      "description": "Monthly Savings",
+      "type": "transfer",
+      "amount": 300,
+      "categoryId": "tcat_transfer",
+      "fromAccountId": "checking",
+      "toAccountId": "savings",
+      "dayOfMonth": 26
+    }
+  ],
+  "randomExpenses": [
+    {
+      "category": "tcat_food",
+      "min": 20,
+      "max": 80,
+      "descriptions": ["Restaurant", "Coffee Shop", "Fast Food"]
+    },
+    {
+      "category": "tcat_shopping",
+      "min": 30,
+      "max": 150,
+      "descriptions": ["Clothing Store", "Online Shopping", "Electronics"]
+    },
+    {
+      "category": "tcat_entertainment",
+      "min": 10,
+      "max": 50,
+      "descriptions": ["Movie Theater", "Streaming Service", "Concert"]
+    }
+  ],
+  "assets": [
+    {
+      "name": "Bitcoin",
+      "type": "cryptocurrency",
+      "accountId": "investment",
+      "description": "Bitcoin Investment",
+      "quantity": 0.15,
+      "currentPrice": 35000,
+      "acquisitionPrice": 30000,
+      "acquisitionDateDaysAgo": 180,
+      "notes": "Long-term investment",
+      "symbol": "BTC",
+      "purchasePrice": 30000
+    },
+    {
+      "name": "Tesla Stock",
+      "type": "stock",
+      "accountId": "investment",
+      "description": "Tesla Inc. shares",
+      "quantity": 10,
+      "currentPrice": 240,
+      "acquisitionPrice": 200,
+      "acquisitionDateDaysAgo": 200,
+      "notes": "Growth stock",
+      "symbol": "TSLA",
+      "purchasePrice": 200
+    },
+    {
+      "name": "Car",
+      "type": "vehicle",
+      "accountId": "cash",
+      "description": "2019 Toyota Camry",
+      "quantity": 1,
+      "currentPrice": 18000,
+      "acquisitionPrice": 25000,
+      "acquisitionDateDaysAgo": 730,
+      "notes": "Personal vehicle",
+      "purchasePrice": 25000
+    }
+  ],
+  "medicalExpenses": [
+    {
+      "description": "Doctor Visit",
+      "daysAgo": 30,
+      "categoryId": "tcat_health",
+      "fromAccountId": "checking",
+      "minAmount": 75,
+      "maxAmount": 175
+    },
+    {
+      "description": "Doctor Visit",
+      "daysAgo": 120,
+      "categoryId": "tcat_health",
+      "fromAccountId": "checking",
+      "minAmount": 75,
+      "maxAmount": 175
+    },
+    {
+      "description": "Doctor Visit",
+      "daysAgo": 210,
+      "categoryId": "tcat_health",
+      "fromAccountId": "checking",
+      "minAmount": 75,
+      "maxAmount": 175
+    }
+  ]
+}
