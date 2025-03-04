@@ -45,5 +45,5 @@
       - Override previous transaction calculations
 
   * Demo Data
-  * Allow to unarchive an account
-  * Rework README
+  * ✓ Allow to unarchive an account
+  * ✓ Rework README

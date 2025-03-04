@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Title,
   Container,
@@ -32,6 +32,10 @@ import {
   IconPlus,
   IconInfoCircle,
   IconCheck,
+  IconX,
+  IconDownload,
+  IconUpload,
+  IconTrashX,
 } from '@tabler/icons-react';
 import { useFinanceStore } from '@/store/financeStore';
 import { CURRENCIES } from '@/config/constants';
@@ -40,10 +44,16 @@ import { AccountCategory, TransactionCategory, TransactionType } from '@/models'
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<string | null>('general');
   const [opened, { open, close }] = useDisclosure(false);
+  const [confirmResetOpened, confirmReset] = useDisclosure(false);
   const [currentCategory, setCurrentCategory] = useState<AccountCategory | TransactionCategory | null>(null);
   const [categoryType, setCategoryType] = useState<'account' | 'transaction'>('account');
   const [transactionCategoryType, setTransactionCategoryType] = useState<TransactionType | 'all'>(TransactionType.INCOME);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [importSuccess, setImportSuccess] = useState<boolean | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  
+  // Create a reference to the file input element for importing data
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const {
     settings,
@@ -55,7 +65,10 @@ export default function SettingsPage() {
     deleteAccountCategory,
     addTransactionCategory,
     updateTransactionCategory,
-    deleteTransactionCategory
+    deleteTransactionCategory,
+    exportData,
+    importData,
+    resetData
   } = useFinanceStore();
   
   // Form for adding/editing categories
@@ -71,6 +84,84 @@ export default function SettingsPage() {
     value: currency.code,
     label: `${currency.code} (${currency.symbol}) - ${currency.name}`
   }));
+  
+  // Handle export data
+  const handleExportData = () => {
+    // Get the data from store
+    const data = exportData();
+    
+    // Convert it to a JSON string
+    const jsonString = JSON.stringify(data, null, 2);
+    
+    // Create a blob and a download link
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `finance-data-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  
+  // Handle import data
+  const handleImportClick = () => {
+    // Trigger the hidden file input
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  // Handle file selection for import
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jsonData = JSON.parse(e.target?.result as string);
+        const success = importData(jsonData);
+        
+        if (success) {
+          setImportSuccess(true);
+          setImportError(null);
+          // Clear the success message after 3 seconds
+          setTimeout(() => setImportSuccess(null), 3000);
+        } else {
+          setImportSuccess(false);
+          setImportError('Invalid data format. Could not import the file.');
+          setTimeout(() => setImportError(null), 5000);
+        }
+      } catch (error) {
+        setImportSuccess(false);
+        setImportError('Error parsing the JSON file.');
+        setTimeout(() => setImportError(null), 5000);
+      }
+      
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+  
+  // Handle reset all data
+  const handleResetData = () => {
+    resetData();
+    confirmReset.close();
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
   
   // Date format options
   const dateFormatOptions = [
@@ -487,6 +578,28 @@ export default function SettingsPage() {
           <Card withBorder p="lg">
             <Text fw={500} mb="md">Data Management</Text>
             
+            {(importSuccess === true || saveSuccess) && (
+              <Alert 
+                icon={<IconCheck size="1rem" />} 
+                title="Success!" 
+                color="green" 
+                mb="md"
+              >
+                {importSuccess ? 'Data imported successfully.' : 'Data reset successfully.'}
+              </Alert>
+            )}
+            
+            {importSuccess === false && importError && (
+              <Alert 
+                icon={<IconX size="1rem" />} 
+                title="Error" 
+                color="red" 
+                mb="md"
+              >
+                {importError}
+              </Alert>
+            )}
+            
             <Alert 
               icon={<IconInfoCircle size="1rem" />}
               title="Local Storage"
@@ -496,10 +609,43 @@ export default function SettingsPage() {
             </Alert>
             
             <Stack gap="md">
-              <Button variant="outline" color="blue">Export All Data (JSON)</Button>
-              <Button variant="outline" color="blue">Import Data</Button>
+              <Button 
+                leftSection={<IconDownload size="1rem" />}
+                variant="outline" 
+                color="blue"
+                onClick={handleExportData}
+              >
+                Export All Data (JSON)
+              </Button>
+              
+              <Button 
+                leftSection={<IconUpload size="1rem" />}
+                variant="outline" 
+                color="blue"
+                onClick={handleImportClick}
+              >
+                Import Data
+              </Button>
+              
+              {/* Hidden file input for import */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept=".json"
+                onChange={handleFileChange}
+              />
+              
               <Divider my="xs" />
-              <Button variant="outline" color="red">Reset All Data</Button>
+              
+              <Button 
+                leftSection={<IconTrashX size="1rem" />}
+                variant="outline" 
+                color="red"
+                onClick={confirmReset.open}
+              >
+                Reset All Data
+              </Button>
             </Stack>
             
             <Text fw={500} mt="xl" mb="md">External Integrations</Text>
@@ -573,6 +719,28 @@ export default function SettingsPage() {
             </Group>
           </Group>
         </Stack>
+      </Modal>
+      
+      {/* Confirm Reset Modal */}
+      <Modal
+        opened={confirmResetOpened}
+        onClose={confirmReset.close}
+        title="Reset All Data"
+        size="md"
+      >
+        <Alert
+          icon={<IconInfoCircle size="1rem" />}
+          title="Warning"
+          color="red"
+          mb="md"
+        >
+          This action will reset all your data to default values. All accounts, transactions, and assets will be deleted. This cannot be undone.
+        </Alert>
+        
+        <Group justify="flex-end" mt="md">
+          <Button variant="light" onClick={confirmReset.close}>Cancel</Button>
+          <Button color="red" onClick={handleResetData}>Reset All Data</Button>
+        </Group>
       </Modal>
     </Container>
   );

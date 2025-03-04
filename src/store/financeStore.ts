@@ -51,6 +51,11 @@ export interface FinanceStore {
   addAsset: (asset: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>) => string;
   updateAsset: (id: string, updates: Partial<Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>>) => boolean;
   deleteAsset: (id: string) => boolean;
+  
+  // Data Export/Import
+  exportData: () => object;
+  importData: (data: any) => boolean;
+  resetData: () => void;
 }
 
 // Default settings
@@ -384,6 +389,75 @@ export const useFinanceStore = create<FinanceStore>()(
         }));
         
         return true;
+      },
+      
+      // Data Export/Import functions
+      exportData: () => {
+        const { settings, accounts, accountCategories, transactions, transactionCategories, assets } = get();
+        
+        return {
+          appVersion: '1.0.0',
+          exportDate: new Date().toISOString(),
+          data: {
+            settings,
+            accounts,
+            accountCategories,
+            transactions,
+            transactionCategories,
+            assets,
+          }
+        };
+      },
+      
+      importData: (data) => {
+        if (!data || typeof data !== 'object') {
+          return false;
+        }
+        
+        try {
+          // Validate the data structure
+          const requiredKeys = ['settings', 'accounts', 'accountCategories', 
+                               'transactions', 'transactionCategories', 'assets'];
+          
+          if (!data.data || !requiredKeys.every(key => key in data.data)) {
+            return false;
+          }
+          
+          set(() => ({
+            settings: data.data.settings || DEFAULT_SETTINGS,
+            accounts: data.data.accounts || [],
+            accountCategories: [
+              ...DEFAULT_ACCOUNT_CATEGORIES, // Always include default categories
+              ...(data.data.accountCategories || []).filter((cat: AccountCategory) => 
+                !cat.isDefault && !DEFAULT_ACCOUNT_CATEGORIES.some(dc => dc.id === cat.id)
+              )
+            ],
+            transactions: data.data.transactions || [],
+            transactionCategories: [
+              ...DEFAULT_TRANSACTION_CATEGORIES, // Always include default categories
+              ...(data.data.transactionCategories || []).filter((cat: TransactionCategory) => 
+                !cat.isDefault && !DEFAULT_TRANSACTION_CATEGORIES.some(dc => dc.id === cat.id)
+              )
+            ],
+            assets: data.data.assets || [],
+          }));
+          
+          return true;
+        } catch (error) {
+          console.error('Error importing data:', error);
+          return false;
+        }
+      },
+      
+      resetData: () => {
+        set(() => ({
+          settings: DEFAULT_SETTINGS,
+          accounts: [],
+          accountCategories: DEFAULT_ACCOUNT_CATEGORIES,
+          transactions: [],
+          transactionCategories: DEFAULT_TRANSACTION_CATEGORIES,
+          assets: [],
+        }));
       },
     }),
     {
