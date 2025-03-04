@@ -6,6 +6,7 @@
   * ✓ Accounts Total Balance shows 0 even if some account has a non 0 balance
   * ✓ Cash Flow (30d) shows 0 even if there are transactions
   * ✓ Net Worth tab doesn't show the proper value per date (it always shows the most recent one).
+  * Expenses by Category also shows income and transactions transactions (which is not logical).
 
 * Reports Page
   * ✓ Net Cash Flow, Total Income, Total Expenses show 0 even if there are transactionsd.
@@ -25,8 +26,8 @@
 
 # Features to Implements:
 * Dashboard/Homepage
-  * Clicking on the Accounts and Assets cards should link to the proper page.
-  * Add the total assets value to the Asset card
+  * ✓ Clicking on the Accounts and Assets cards should link to the proper page.
+  * ✓ Add the total assets value to the Asset card
 
 * Transactions List:
   * Clicking on the Account name should link to the Account Details Page.

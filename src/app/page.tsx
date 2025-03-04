@@ -21,7 +21,8 @@ import {
   IconArrowUpRight, 
   IconArrowDownRight, 
   IconWallet, 
-  IconCoin, 
+  IconCoin,
+  IconCash,
   IconChartPie,
   IconChartBar,
   IconPlus
@@ -120,7 +121,7 @@ export default function Dashboard() {
           <Group justify="space-between">
             <Text size="lg" fw={500} c="dimmed">Net Worth</Text>
             <ThemeIcon color="blue" variant="light" size="lg" radius="md">
-              <IconWallet size={20} stroke={1.5} />
+              <IconCash size={20} stroke={1.5} />
             </ThemeIcon>
           </Group>
           <Text fw={700} size="xl" mt="md">{formatAmount(netWorth)}</Text>
@@ -160,56 +161,75 @@ export default function Dashboard() {
         <Card withBorder padding="lg" radius="md">
           <Group justify="space-between">
             <Text size="lg" fw={500} c="dimmed">Accounts</Text>
-            <Badge>{activeAccountsCount}</Badge>
+            <Group gap="xs">
+              <Badge>{activeAccountsCount}</Badge>
+              <ThemeIcon color="blue" variant="light" size="lg" radius="md">
+                <IconWallet size={20} stroke={1.5} />
+              </ThemeIcon>
+            </Group>
           </Group>
-          <Group mt="md" gap="xs">
-            {accounts.length > 0 ? (
-              <Stack gap={0}>
-                <Text fw={700} size="xl">
-                  {formatAmount(accounts.reduce((total, acc) => {
-                    if (acc.isArchived) return total;
-                    const balance = calculateAccountBalance(acc.id);
-                    return total + toBaseCurrency(balance, acc.currency);
-                  }, 0))}
-                </Text>
-                <Text size="xs" c="dimmed">Total Balance</Text>
-              </Stack>
-            ) : (
-              <Button 
-                size="xs"
-                leftSection={<IconPlus size={12} />}
-                onClick={openAccountModal}
-              >
-                Add Your First Account
-              </Button>
-            )}
-          </Group>
+          <Link href="/accounts" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Group mt="md" gap="xs">
+              {accounts.length > 0 ? (
+                <Stack gap={0}>
+                  <Text fw={700} size="xl">
+                    {formatAmount(accounts.reduce((total, acc) => {
+                      if (acc.isArchived) return total;
+                      const balance = calculateAccountBalance(acc.id);
+                      return total + toBaseCurrency(balance, acc.currency);
+                    }, 0))}
+                  </Text>
+                  <Text size="xs" c="dimmed">Total Balance</Text>
+                </Stack>
+              ) : (
+                <Button 
+                  size="xs"
+                  leftSection={<IconPlus size={12} />}
+                  onClick={openAccountModal}
+                >
+                  Add Your First Account
+                </Button>
+              )}
+            </Group>
+          </Link>
         </Card>
         
         <Card withBorder padding="lg" radius="md">
           <Group justify="space-between">
             <Text size="lg" fw={500} c="dimmed">Assets</Text>
-            <ThemeIcon color="violet" variant="light" size="lg" radius="md">
-              <IconCoin size={20} stroke={1.5} />
-            </ThemeIcon>
+            <Group gap="xs">
+              <Badge>{assetsCount}</Badge>
+              <ThemeIcon color="violet" variant="light" size="lg" radius="md">
+                <IconCoin size={20} stroke={1.5} />
+              </ThemeIcon>
+            </Group>
           </Group>
-          <Group mt="md" gap={8}>
-            {assets.length > 0 ? (
-              <>
-                <Text fw={700} size="xl">{assetsCount}</Text>
-                <Text size="xs" c="dimmed">Assets tracked</Text>
-              </>
-            ) : (
-              <Button 
-                component={Link}
-                href="/assets"
-                size="xs"
-                leftSection={<IconPlus size={12} />}
-              >
-                Add Your First Asset
-              </Button>
-            )}
-          </Group>
+          <Link href="/assets" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Group mt="md" gap={8}>
+              {assets.length > 0 ? (
+                <Stack gap={4}>
+                  <Text fw={700} size="xl">
+                    {formatAmount(assets.reduce((total, asset) => {
+                      const account = accounts.find(acc => acc.id === asset.accountId);
+                      if (!account) return total;
+                      const value = asset.quantity * asset.currentPrice;
+                      return total + toBaseCurrency(value, account.currency);
+                    }, 0))}
+                  </Text>
+                  <Text size="xs" c="dimmed">Total Value</Text>
+                </Stack>
+              ) : (
+                <Button 
+                  component={Link}
+                  href="/assets"
+                  size="xs"
+                  leftSection={<IconPlus size={12} />}
+                >
+                  Add Your First Asset
+                </Button>
+              )}
+            </Group>
+          </Link>
         </Card>
       </SimpleGrid>
       
