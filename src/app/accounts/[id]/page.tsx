@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from 'react';
+import {use, useEffect, useState } from 'react';
 import {
   Title,
   Container,
@@ -51,7 +51,9 @@ const PAGE_SIZE_OPTIONS = [
 ];
 
 export default function AccountDetailsPage({ params }: { params: { id: string } }) {
-  const accountId = use(Promise.resolve(params.id));
+  // Might need to do differently as it shows problems in the code but works in the browser
+  const { id : accountId } = use(params);
+  
   const { accounts, transactions, accountCategories, transactionCategories, deleteAccount, archiveAccount, unarchiveAccount } = useFinanceStore();
   const { formatAmount } = useCurrency();
   const { calculateAccountBalance } = useNetWorth();
