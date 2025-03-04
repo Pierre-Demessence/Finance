@@ -44,7 +44,7 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
       quantity: 1,
       currentPrice: 0,
       acquisitionPrice: undefined as number | undefined,
-      acquisitionDate: null as Date | null,
+      purchaseDate: null as Date | null,  // Changed from acquisitionDate to match model
       description: '',
       identifier: '',
     },
@@ -67,7 +67,7 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
         quantity: asset.quantity,
         currentPrice: asset.currentPrice,
         acquisitionPrice: asset.acquisitionPrice,
-        acquisitionDate: asset.acquisitionDate || null,
+        purchaseDate: asset.purchaseDate || null,  // Changed from acquisitionDate to match model
         description: asset.description || '',
         identifier: asset.identifier || '',
       });
@@ -98,8 +98,8 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
       accountId: values.accountId,
       quantity: values.quantity,
       currentPrice: values.currentPrice,
-      purchasePrice: values.acquisitionPrice || 0, // Default to 0 if undefined
-      purchaseDate: values.acquisitionDate || new Date(), // Default to current date if not provided
+      purchasePrice: values.acquisitionPrice || 0,
+      purchaseDate: values.purchaseDate || new Date(),  // Changed to match model
       description: values.description || undefined,
       identifier: values.identifier || undefined,
       lastUpdated: new Date(),
@@ -208,11 +208,11 @@ export default function AssetForm({ asset, onClose, initialType }: AssetFormProp
           </Grid.Col>
           <Grid.Col span={6}>
             <DateInput
-              label="Acquisition Date (optional)"
+              label="Purchase Date (optional)"  // Updated label to match field name
               placeholder="Select date"
               valueFormat="DD/MM/YYYY"
               clearable
-              {...form.getInputProps('acquisitionDate')}
+              {...form.getInputProps('purchaseDate')}  // Changed from acquisitionDate to match model
             />
           </Grid.Col>
         </Grid>
