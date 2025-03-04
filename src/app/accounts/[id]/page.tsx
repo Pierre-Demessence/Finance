@@ -1,0 +1,420 @@
+"use client";
+
+import { useEffect, useState } from 'react';
+import {
+  Title,
+  Container,
+  Group,
+  Button,
+  Card,
+  Text,
+  ActionIcon,
+  Tabs,
+  Badge,
+  Menu,
+  ThemeIcon,
+  Stack,
+  Modal,
+} from '@mantine/core';
+import { 
+  IconEdit, 
+  IconTrash, 
+  IconArrowRight,
+  IconChartPie,
+  IconCoin,
+  IconHistory,
+  IconPlus,
+  IconArrowUp,
+  IconArrowDown,
+  IconDotsVertical,
+} from '@tabler/icons-react';
+import { useFinanceStore } from '@/store/financeStore';
+import { useDisclosure } from '@mantine/hooks';
+import { useCurrency, useNetWorth } from '@/hooks/useFinanceUtils';
+import TransactionForm from '@/components/TransactionForm';
+import AccountForm from '@/components/AccountForm';
+import Link from 'next/link';
+import { notifications } from '@mantine/notifications';
+import { redirect } from 'next/navigation';
+import { AccountCategory, Transaction } from '@/models';
+
+export default function AccountDetailsPage({ params }: { params: { id: string } }) {
+  const accountId = params.id;
+  const { accounts, transactions, accountCategories, transactionCategories, deleteAccount, archiveAccount } = useFinanceStore();
+  const { formatAmount } = useCurrency();
+  const { calculateAccountBalance } = useNetWorth();
+  
+  // Find the account
+  const account = accounts.find(a => a.id === accountId);
+  
+  // State for the transaction being edited
+  const [currentTransaction, setCurrentTransaction] = useState<Transaction | undefined>(undefined);
+  
+  // Modal states
+  const [opened, { open, close }] = useDisclosure(false);
+  const [deleteModalOpened, { open: openDeleteModal, close: closeDeleteModal }] = useDisclosure(false);
+  const [transactionModalOpened, { open: openTransactionModal, close: closeTransactionModal }] = useDisclosure(false);
+  const [editTransactionModalOpened, { open: openEditTransactionModal, close: closeEditTransactionModal }] = useDisclosure(false);
+  
+  // Redirect if account doesn't exist
+  useEffect(() => {
+    if (!account) {
+      redirect('/accounts');
+    }
+  }, [account]);
+  
+  if (!account) return null; // This will not render as we redirect above
+  
+  // Filter transactions related to this account
+  const accountTransactions = transactions.filter(
+    (t: Transaction) => t.fromAccountId === accountId || t.toAccountId === accountId
+  ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  const balance = calculateAccountBalance(accountId);
+  const category = accountCategories.find((c: AccountCategory) => c.id === account.categoryId);
+  
+  // Chart data for balance history - Simplified to avoid errors
+  const balanceHistory = accountTransactions.reduce((timeline: {date: string, balance: number}[], transaction) => {
+    const date = new Date(transaction.date).toISOString().split('T')[0];
+    const amount = transaction.fromAccountId === accountId ? -transaction.amount : transaction.amount;
+    
+    const existingDateIndex = timeline.findIndex(entry => entry.date === date);
+    if (existingDateIndex >= 0) {
+      timeline[existingDateIndex].balance += amount;
+    } else {
+      timeline.push({ date, balance: amount });
+    }
+    
+    return timeline;
+  }, []).sort((a, b) => a.date.localeCompare(b.date));
+    
+  // Handle account edit
+  const handleEditAccount = () => {
+    open();
+  };
+  
+  // Handle transaction edit
+  const handleEditTransaction = (transaction: Transaction) => {
+    setCurrentTransaction(transaction);
+    openEditTransactionModal();
+  };
+  
+  // Handle form submission (edit)
+  const handleFormSubmit = () => {
+    close();
+    closeTransactionModal();
+    closeEditTransactionModal();
+    setCurrentTransaction(undefined);
+    notifications.show({
+      title: 'Success',
+      message: currentTransaction ? 'Transaction updated successfully' : `"${account.name}" has been updated successfully.`,
+      color: 'green',
+    });
+  };
+  
+  // Handle account archive
+  const handleArchiveAccount = () => {
+    archiveAccount(account.id);
+    notifications.show({
+      title: 'Account Archived',
+      message: `"${account.name}" has been archived.`,
+      color: 'blue',
+    });
+  };
+  
+  // Handle account delete confirmation
+  const handleDeleteConfirm = () => {
+    openDeleteModal();
+  };
+  
+  // Handle actual account deletion
+  const handleDeleteAccount = () => {
+    const deleted = deleteAccount(account.id);
+    if (deleted) {
+      notifications.show({
+        title: 'Account Deleted',
+        message: `"${account.name}" has been deleted successfully.`,
+        color: 'green',
+      });
+      redirect('/accounts');
+    } else {
+      notifications.show({
+        title: 'Cannot Delete Account',
+        message: 'This account has transactions or assets associated with it and cannot be deleted.',
+        color: 'red',
+      });
+    }
+    
+    closeDeleteModal();
+  };
+  
+  return (
+    <Container size="xl">
+      <Group justify="space-between" mb="lg">
+        <Group gap="xs">
+          <Button 
+            variant="subtle" 
+            component={Link} 
+            href="/accounts"
+            leftSection={<IconArrowRight size={16} style={{ transform: 'rotate(180deg)' }} />}
+          >
+            Back to Accounts
+          </Button>
+          <Title order={2}>{account.name}</Title>
+          {account.isArchived && (
+            <Badge color="gray" size="lg">Archived</Badge>
+          )}
+        </Group>
+        
+        <Group>
+          <Button 
+            leftSection={<IconPlus size={16} />}
+            onClick={openTransactionModal}
+          >
+            New Transaction
+          </Button>
+          <Menu position="bottom-end" withArrow withinPortal>
+            <Menu.Target>
+              <ActionIcon variant="light" size="lg">
+                <IconDotsVertical size={16} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item 
+                leftSection={<IconEdit size={14} />}
+                onClick={handleEditAccount}
+              >
+                Edit Account
+              </Menu.Item>
+              {!account.isArchived ? (
+                <Menu.Item 
+                  leftSection={<IconHistory size={14} />}
+                  onClick={handleArchiveAccount}
+                >
+                  Archive Account
+                </Menu.Item>
+              ) : null}
+              <Menu.Item 
+                leftSection={<IconTrash size={14} />}
+                color="red"
+                onClick={handleDeleteConfirm}
+              >
+                Delete Account
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        </Group>
+      </Group>
+      
+      <SimpleCard
+        title="Account Details"
+        data={[
+          { label: 'Category', value: category?.name || 'Uncategorized' },
+          { label: 'Currency', value: account.currency },
+          { label: 'Current Balance', value: formatAmount(balance, account.currency) },
+          { label: 'Description', value: account.description || 'None' },
+        ]}
+      />
+      
+      <Tabs defaultValue="transactions" mt="lg">
+        <Tabs.List>
+          <Tabs.Tab value="transactions" leftSection={<IconHistory size={16} />}>
+            Transactions
+          </Tabs.Tab>
+          <Tabs.Tab value="balance" leftSection={<IconChartPie size={16} />}>
+            Balance History
+          </Tabs.Tab>
+        </Tabs.List>
+        
+        <Tabs.Panel value="transactions" pt="md">
+          {accountTransactions.length === 0 ? (
+            <Card withBorder>
+              <Stack align="center" py="xl">
+                <ThemeIcon size="xl" radius="xl" color="blue" variant="light">
+                  <IconCoin size={30} />
+                </ThemeIcon>
+                <Text ta="center" fw={500}>No transactions yet</Text>
+                <Text ta="center" c="dimmed" size="sm">
+                  This account doesn't have any transactions yet
+                </Text>
+                <Button 
+                  leftSection={<IconPlus size={16} />}
+                  onClick={openTransactionModal}
+                  variant="light"
+                  mt="md"
+                >
+                  Add Transaction
+                </Button>
+              </Stack>
+            </Card>
+          ) : (
+            <Card withBorder p="md">
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '8px 16px' }}>Date</th>
+                    <th style={{ textAlign: 'left', padding: '8px 16px' }}>Description</th>
+                    <th style={{ textAlign: 'left', padding: '8px 16px' }}>Category</th>
+                    <th style={{ textAlign: 'left', padding: '8px 16px' }}>Amount</th>
+                    <th style={{ textAlign: 'left', padding: '8px 16px' }}>From/To</th>
+                    <th style={{ textAlign: 'left', padding: '8px 16px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accountTransactions.map((transaction) => {
+                    const isExpense = transaction.fromAccountId === accountId;
+                    const otherAccount = isExpense
+                      ? accounts.find(a => a.id === transaction.toAccountId)
+                      : accounts.find(a => a.id === transaction.fromAccountId);
+                    const transactionCategory = transactionCategories.find(c => c.id === transaction.categoryId);
+                    
+                    return (
+                      <tr key={transaction.id}>
+                        <td style={{ padding: '8px 16px' }}>
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </td>
+                        <td style={{ padding: '8px 16px' }}>
+                          {transaction.description}
+                        </td>
+                        <td style={{ padding: '8px 16px' }}>
+                          {transactionCategory?.name || '-'}
+                        </td>
+                        <td style={{ padding: '8px 16px' }}>
+                          <Group gap="xs" wrap="nowrap">
+                            <Text 
+                              c={isExpense ? 'red' : 'teal'}
+                              fw={500}
+                            >
+                              {isExpense ? '-' : '+'}{formatAmount(transaction.amount, account.currency)}
+                            </Text>
+                            {isExpense ? (
+                              <IconArrowDown size={14} stroke={1.5} color="red" />
+                            ) : (
+                              <IconArrowUp size={14} stroke={1.5} color="teal" />
+                            )}
+                          </Group>
+                        </td>
+                        <td style={{ padding: '8px 16px' }}>
+                          {isExpense ? otherAccount?.name || 'External' : otherAccount?.name || 'External'}
+                        </td>
+                        <td style={{ padding: '8px 16px' }}>
+                          <ActionIcon 
+                            variant="light" 
+                            color="blue"
+                            onClick={() => handleEditTransaction(transaction)}
+                          >
+                            <IconEdit size={16} />
+                          </ActionIcon>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </Card>
+          )}
+        </Tabs.Panel>
+        
+        <Tabs.Panel value="balance" pt="md">
+          <Card withBorder p="md">
+            {balanceHistory.length < 2 ? (
+              <Text ta="center" c="dimmed" py="lg">
+                Not enough transaction history to show the balance chart
+              </Text>
+            ) : (
+              <div>
+                <Title order={4} mb="md">Balance History</Title>
+                <Text c="dimmed" size="sm" mb="md">
+                  Chart showing account balance over time
+                </Text>
+                {/* Chart would go here - simplified for now */}
+                <Text size="sm">
+                  Balance data available for {balanceHistory.length} date points
+                </Text>
+              </div>
+            )}
+          </Card>
+        </Tabs.Panel>
+      </Tabs>
+      
+      {/* Account Form Modal */}
+      <Modal 
+        opened={opened} 
+        onClose={close} 
+        title="Edit Account"
+        size="lg"
+      >
+        <AccountForm
+          account={account}
+          onSubmit={handleFormSubmit}
+          onCancel={close}
+        />
+      </Modal>
+      
+      {/* New Transaction Form Modal */}
+      <Modal 
+        opened={transactionModalOpened} 
+        onClose={closeTransactionModal} 
+        title="New Transaction"
+        size="lg"
+      >
+        <TransactionForm
+          onSubmit={handleFormSubmit}
+          onCancel={closeTransactionModal}
+          initialAccountId={accountId}
+        />
+      </Modal>
+      
+      {/* Edit Transaction Form Modal */}
+      <Modal 
+        opened={editTransactionModalOpened} 
+        onClose={closeEditTransactionModal} 
+        title="Edit Transaction"
+        size="lg"
+      >
+        <TransactionForm
+          transaction={currentTransaction}
+          onSubmit={handleFormSubmit}
+          onCancel={closeEditTransactionModal}
+        />
+      </Modal>
+      
+      {/* Delete Confirmation Modal */}
+      <Modal 
+        opened={deleteModalOpened} 
+        onClose={closeDeleteModal} 
+        title="Delete Account"
+        centered
+      >
+        <Text mb="lg">
+          Are you sure you want to delete the account "{account.name}"? 
+          This action cannot be undone if the account has no associated transactions or assets.
+        </Text>
+        <Group justify="flex-end">
+          <Button variant="light" onClick={closeDeleteModal}>Cancel</Button>
+          <Button color="red" onClick={handleDeleteAccount}>Delete</Button>
+        </Group>
+      </Modal>
+    </Container>
+  );
+}
+
+// Helper component for displaying account details
+function SimpleCard({ title, data }: { 
+  title: string; 
+  data: { label: string; value: string | React.ReactNode }[] 
+}) {
+  return (
+    <Card withBorder>
+      <Text fw={500} size="lg" mb="md">{title}</Text>
+      <Stack gap="xs">
+        {data.map((item, index) => (
+          <Group key={index} justify="space-between">
+            <Text c="dimmed" size="sm">{item.label}</Text>
+            <Text fw={500}>{item.value}</Text>
+          </Group>
+        ))}
+      </Stack>
+    </Card>
+  );
+}
