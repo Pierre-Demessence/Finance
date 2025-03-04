@@ -18,6 +18,7 @@ import {
   Pagination,
   Flex,
   NativeSelect,
+  Loader,
 } from '@mantine/core';
 import { 
   IconEdit, 
@@ -61,6 +62,9 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
   // Find the account
   const account = accounts.find(a => a.id === accountId);
   
+  // Loading state to handle hydration
+  const [isLoading, setIsLoading] = useState(true);
+  
   // State for the transaction being edited
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | undefined>(undefined);
   
@@ -74,14 +78,39 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(TRANSACTIONS_PER_PAGE);
   
-  // Redirect if account doesn't exist
+  // Wait for hydration before redirecting
   useEffect(() => {
-    if (!account) {
+    // Give time for Zustand store to hydrate from localStorage
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  // Redirect if account doesn't exist, but only after hydration
+  useEffect(() => {
+    if (!isLoading && accounts.length > 0 && !account) {
       redirect('/accounts');
     }
-  }, [account]);
+  }, [account, accounts.length, isLoading]);
   
-  if (!account) return null; // This will not render as we redirect above
+  // Show loading state while hydrating
+  if (isLoading) {
+    return (
+      <Container size="xl">
+        <Stack h={200} justify="center" align="center">
+          <Loader size="lg" />
+          <Text>Loading account details...</Text>
+        </Stack>
+      </Container>
+    );
+  }
+  
+  // Return early when store is hydrated but account not found
+  if (!account && accounts.length > 0) return null;
+  
+  // If we're still waiting for hydration or account is found, continue with rendering
   
   // Filter transactions related to this account
   const accountTransactions = transactions.filter(
@@ -96,6 +125,9 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
   
   // Calculate total pages
   const totalPages = Math.ceil(accountTransactions.length / pageSize);
+  
+  // Skip rendering if account is not yet available
+  if (!account) return null;
   
   const balance = calculateAccountBalance(accountId);
   const category = accountCategories.find((c: AccountCategory) => c.id === account.categoryId);
