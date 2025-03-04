@@ -15,6 +15,9 @@ import {
   ThemeIcon,
   Stack,
   Modal,
+  Pagination,
+  Flex,
+  NativeSelect,
 } from '@mantine/core';
 import { 
   IconEdit, 
@@ -39,6 +42,14 @@ import { notifications } from '@mantine/notifications';
 import { redirect } from 'next/navigation';
 import { AccountCategory, Transaction } from '@/models';
 
+const TRANSACTIONS_PER_PAGE = 10;
+const PAGE_SIZE_OPTIONS = [
+  { value: "10", label: "10 per page" },
+  { value: "25", label: "25 per page" },
+  { value: "50", label: "50 per page" },
+  { value: "100", label: "100 per page" }
+];
+
 export default function AccountDetailsPage({ params }: { params: { id: string } }) {
   const accountId = use(Promise.resolve(params.id));
   const { accounts, transactions, accountCategories, transactionCategories, deleteAccount, archiveAccount, unarchiveAccount } = useFinanceStore();
@@ -57,6 +68,10 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
   const [transactionModalOpened, { open: openTransactionModal, close: closeTransactionModal }] = useDisclosure(false);
   const [editTransactionModalOpened, { open: openEditTransactionModal, close: closeEditTransactionModal }] = useDisclosure(false);
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(TRANSACTIONS_PER_PAGE);
+  
   // Redirect if account doesn't exist
   useEffect(() => {
     if (!account) {
@@ -70,6 +85,15 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
   const accountTransactions = transactions.filter(
     (t: Transaction) => t.fromAccountId === accountId || t.toAccountId === accountId
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  // Paginate transactions
+  const paginatedTransactions = accountTransactions.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(accountTransactions.length / pageSize);
   
   const balance = calculateAccountBalance(accountId);
   const category = accountCategories.find((c: AccountCategory) => c.id === account.categoryId);
@@ -296,7 +320,7 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
                   </tr>
                 </thead>
                 <tbody>
-                  {accountTransactions.map((transaction) => {
+                  {paginatedTransactions.map((transaction) => {
                     const isExpense = transaction.fromAccountId === accountId;
                     const otherAccount = isExpense
                       ? accounts.find(a => a.id === transaction.toAccountId)
@@ -350,6 +374,22 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
                   })}
                 </tbody>
               </table>
+              
+              {totalPages > 1 && (
+                <Flex justify="center" mt="md" align="center" gap="md">
+                  <Pagination 
+                    value={currentPage} 
+                    onChange={setCurrentPage}
+                    total={totalPages} 
+                  />
+                  <NativeSelect
+                    data={PAGE_SIZE_OPTIONS}
+                    value={pageSize.toString()}
+                    onChange={(event) => setPageSize(Number(event.currentTarget.value))}
+                    style={{ width: '130px' }}
+                  />
+                </Flex>
+              )}
             </Card>
           )}
         </Tabs.Panel>

@@ -35,9 +35,11 @@
 
 * Transactions List:
   * ✓ Clicking on the Account name should link to the Account Details Page.
+  * ✓ Change number of transactions we can see at once
 
 * Account Details Page:
   * ✓ Clicking on the Account name in the "From/To" column should link to the Account Details Page (not when it's External of course).
+  * ✓ Pagination for transaction list
 
 * Reports Page:
   * Modify Top Income/Expense Categories so it looks like the Assets Summary card in the Assets Page.

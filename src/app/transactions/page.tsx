@@ -23,6 +23,8 @@ import {
   Box,
   Flex,
   Chip,
+  NativeSelect,
+  Group as MantineGroup,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { 
@@ -48,6 +50,12 @@ import { notifications } from '@mantine/notifications';
 import dayjs from 'dayjs';
 
 const TRANSACTIONS_PER_PAGE = 10;
+const PAGE_SIZE_OPTIONS = [
+  { value: "10", label: "10 per page" },
+  { value: "25", label: "25 per page" },
+  { value: "50", label: "50 per page" },
+  { value: "100", label: "100 per page" }
+];
 
 export default function TransactionsPage() {
   const { 
@@ -74,6 +82,7 @@ export default function TransactionsPage() {
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(TRANSACTIONS_PER_PAGE);
   
   // Handle transaction edit
   const handleEditTransaction = (transaction: Transaction) => {
@@ -187,17 +196,17 @@ export default function TransactionsPage() {
   
   // Paginate transactions
   const paginatedTransactions = filteredTransactions.slice(
-    (currentPage - 1) * TRANSACTIONS_PER_PAGE,
-    currentPage * TRANSACTIONS_PER_PAGE
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
   
   // Calculate total pages
-  const totalPages = Math.ceil(filteredTransactions.length / TRANSACTIONS_PER_PAGE);
+  const totalPages = Math.ceil(filteredTransactions.length / pageSize);
   
-  // Reset pagination when filters change
+  // Reset pagination when filters change or page size changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, dateRange, categoryFilter, accountFilter, typeFilter, sortBy, sortOrder]);
+  }, [search, dateRange, categoryFilter, accountFilter, typeFilter, sortBy, sortOrder, pageSize]);
   
   // Category filter options
   const categoryOptions = [
@@ -463,11 +472,17 @@ export default function TransactionsPage() {
             </Table>
             
             {totalPages > 1 && (
-              <Flex justify="center" mt="md">
+              <Flex justify="center" mt="md" align="center" gap="md">
                 <Pagination 
                   value={currentPage} 
                   onChange={setCurrentPage}
                   total={totalPages} 
+                />
+                <NativeSelect
+                  data={PAGE_SIZE_OPTIONS}
+                  value={pageSize.toString()}
+                  onChange={(event) => setPageSize(Number(event.currentTarget.value))}
+                  style={{ width: '130px' }}
                 />
               </Flex>
             )}
