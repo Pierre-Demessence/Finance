@@ -398,12 +398,29 @@ export default function TransactionsPage() {
                       <Table.Td>
                         {transaction.type === TransactionType.TRANSFER ? (
                           <Text size="sm">
-                            {fromAccount?.name || 'Unknown'} → {toAccount?.name || 'Unknown'}
+                            {fromAccount ? (
+                              <Link href={`/accounts/${fromAccount.id}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:underline">
+                                {fromAccount.name}
+                              </Link>
+                            ) : 'Unknown'} → {
+                            toAccount ? (
+                              <Link href={`/accounts/${toAccount.id}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:underline">
+                                {toAccount.name}
+                              </Link>
+                            ) : 'Unknown'}
                           </Text>
                         ) : transaction.type === TransactionType.INCOME ? (
-                          toAccount?.name || 'External'
+                          toAccount ? (
+                            <Link href={`/accounts/${toAccount.id}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:underline">
+                              {toAccount.name}
+                            </Link>
+                          ) : 'External'
                         ) : (
-                          fromAccount?.name || 'External'
+                          fromAccount ? (
+                            <Link href={`/accounts/${fromAccount.id}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:underline">
+                              {fromAccount.name}
+                            </Link>
+                          ) : 'External'
                         )}
                       </Table.Td>
                       <Table.Td>

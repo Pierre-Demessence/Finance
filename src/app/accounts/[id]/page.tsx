@@ -313,7 +313,11 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
                           </Group>
                         </td>
                         <td style={{ padding: '8px 16px' }}>
-                          {isExpense ? otherAccount?.name || 'External' : otherAccount?.name || 'External'}
+                          {otherAccount ? (
+                            <Link href={`/accounts/${otherAccount.id}`} style={{ color: 'inherit', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+                              {otherAccount.name}
+                            </Link>
+                          ) : 'External'}
                         </td>
                         <td style={{ padding: '8px 16px' }}>
                           <ActionIcon 

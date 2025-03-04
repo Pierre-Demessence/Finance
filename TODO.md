@@ -33,10 +33,10 @@
   * ✓ Add the total assets value to the Asset card
 
 * Transactions List:
-  * Clicking on the Account name should link to the Account Details Page.
+  * ✓ Clicking on the Account name should link to the Account Details Page.
 
 * Account Details Page:
-  * Clicking on the Account name in the "From/To" column should link to the Account Details Page (not when it's External of course).
+  * ✓ Clicking on the Account name in the "From/To" column should link to the Account Details Page (not when it's External of course).
 
 * System:
   * Implement Account Records:
@@ -46,3 +46,4 @@
 
   * Demo Data
   * Allow to unarchive an account
+  * Rework README
