@@ -163,6 +163,8 @@ export default function AssetsPage() {
                       value={formatAmount(item.value)}
                       color={getAssetTypeColor(item.name as AssetType)}
                       icon={<IconChartPie size={16} />}
+                      secondaryLabel="Percentage"
+                      secondaryValue={`${((item.value / assetValues.total) * 100).toFixed(1)}%`}
                     />
                   );
                 },

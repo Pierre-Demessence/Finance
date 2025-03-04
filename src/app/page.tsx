@@ -249,12 +249,17 @@ export default function Dashboard() {
               tooltipProps={{
                 content: ({ payload }) => {
                   if (!payload?.length) return null;
+                  const data = payload[0].payload;
+                  const prevValue = netWorthData[netWorthData.findIndex(d => d.date === data.date) - 1]?.value;
+                  const change = prevValue ? ((data.value - prevValue) / prevValue) * 100 : 0;
                   return (
                     <ChartTooltip
-                      label={payload[0].payload.date}
-                      value={formatAmount(payload[0].value as number)}
+                      label="Net Worth"
+                      value={formatAmount(data.value)}
                       icon={<IconChartLine size={16} />}
                       color="blue.6"
+                      secondaryLabel="Date"
+                      secondaryValue={`${data.date} ${change ? `(${change >= 0 ? '+' : ''}${change.toFixed(1)}%)` : ''}`}
                     />
                   );
                 },
@@ -282,6 +287,8 @@ export default function Dashboard() {
                         value={formatAmount(item.value)}
                         color={item.color}
                         icon={<IconChartPie size={16} />}
+                        secondaryLabel="Percentage"
+                        secondaryValue={`${((item.value / totalExpenses) * 100).toFixed(1)}% of expenses`}
                       />
                     );
                   },

@@ -25,11 +25,15 @@ import {
   IconChartBar, 
   IconArrowUpRight, 
   IconArrowDownRight, 
-  IconCalendarStats
+  IconCalendarStats,
+  IconCash,
+  IconPigMoney,
+  IconReceipt
 } from '@tabler/icons-react';
 import { AreaChart, BarChart, DonutChart } from '@mantine/charts';
 import { useFinanceStore } from '@/store/financeStore';
 import { useCurrency, useNetWorth, useTransactionAnalysis } from '@/hooks/useFinanceUtils';
+import ChartTooltip from '@/components/ChartTooltip';
 import dayjs from 'dayjs';
 
 export default function ReportsPage() {
@@ -281,11 +285,16 @@ export default function ReportsPage() {
               tooltipProps={{
                 content: ({ payload }) => {
                   if (!payload?.length) return null;
+                  const data = payload[0].payload;
                   return (
-                    <div>
-                      <Text>{payload[0].payload.date}</Text>
-                      <Text>{formatAmount(payload[0].value as number)}</Text>
-                    </div>
+                    <ChartTooltip
+                      label="Net Worth"
+                      value={formatAmount(data.value)}
+                      color="blue"
+                      icon={<IconPigMoney size={16} />}
+                      secondaryLabel="Date"
+                      secondaryValue={data.date}
+                    />
                   );
                 },
               }}
@@ -308,10 +317,14 @@ export default function ReportsPage() {
                       if (!payload?.length) return null;
                       const item = payload[0].payload;
                       return (
-                        <div>
-                          <Text>{item.name}</Text>
-                          <Text>{formatAmount(item.value)}</Text>
-                        </div>
+                        <ChartTooltip
+                          label={item.name}
+                          value={formatAmount(item.value)}
+                          color="teal"
+                          icon={<IconCash size={16} />}
+                          secondaryLabel="Percentage"
+                          secondaryValue={`${((item.value / totalIncome) * 100).toFixed(1)}%`}
+                        />
                       );
                     },
                   }}
@@ -350,10 +363,14 @@ export default function ReportsPage() {
                       if (!payload?.length) return null;
                       const item = payload[0].payload;
                       return (
-                        <div>
-                          <Text>{item.name}</Text>
-                          <Text>{formatAmount(item.value)}</Text>
-                        </div>
+                        <ChartTooltip
+                          label={item.name}
+                          value={formatAmount(item.value)}
+                          color="red"
+                          icon={<IconReceipt size={16} />}
+                          secondaryLabel="Percentage"
+                          secondaryValue={`${((item.value / totalExpenses) * 100).toFixed(1)}%`}
+                        />
                       );
                     },
                   }}
@@ -395,12 +412,14 @@ export default function ReportsPage() {
                   if (!payload?.length) return null;
                   const data = payload[0].payload;
                   return (
-                    <div>
-                      <Text>{data.month}</Text>
-                      <Text c="teal">Income: {formatAmount(data.income)}</Text>
-                      <Text c="red">Expenses: {formatAmount(data.expense)}</Text>
-                      <Text>Net: {formatAmount(data.income - data.expense)}</Text>
-                    </div>
+                    <ChartTooltip
+                      label={data.month}
+                      value={formatAmount(data.income - data.expense)}
+                      color={data.income - data.expense >= 0 ? 'teal' : 'red'}
+                      icon={data.income - data.expense >= 0 ? <IconArrowUpRight size={16} /> : <IconArrowDownRight size={16} />}
+                      secondaryLabel="Details"
+                      secondaryValue={`Income: ${formatAmount(data.income)} | Expenses: ${formatAmount(data.expense)}`}
+                    />
                   );
                 },
               }}

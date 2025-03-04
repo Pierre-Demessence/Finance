@@ -23,6 +23,9 @@
 * Assets Page:
   * Editing an asset to change the acquisition date doesn't save the date.
 
+* Others:
+  * Fix theme selection flickering on page load. (It starts with light theme, then swith to dark theme)
+
 
 # Features to Implements:
 * Dashboard/Homepage
