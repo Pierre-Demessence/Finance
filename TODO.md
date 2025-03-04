@@ -6,7 +6,7 @@
   * ✓ Accounts Total Balance shows 0 even if some account has a non 0 balance
   * ✓ Cash Flow (30d) shows 0 even if there are transactions
   * ✓ Net Worth tab doesn't show the proper value per date (it always shows the most recent one).
-  * Expenses by Category also shows income and transactions transactions (which is not logical).
+  * ✓ Expenses by Category also shows income and transfer transactions (which is not logical).
 
 * Reports Page
   * ✓ Net Cash Flow, Total Income, Total Expenses show 0 even if there are transactionsd.

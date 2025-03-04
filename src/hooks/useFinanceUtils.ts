@@ -142,16 +142,30 @@ export function useTransactionAnalysis() {
         : undefined;
     
     return transactions
-      .filter(t => 
-        (transactionType === undefined || t.type === transactionType) &&
-        dayjs(t.date).isAfter(startDate, 'day') || dayjs(t.date).isSame(startDate, 'day') &&
-        dayjs(t.date).isBefore(endDate, 'day') || dayjs(t.date).isSame(endDate, 'day')
-      )
+      .filter(t => {
+        // Skip transfers completely
+        if (t.type === TransactionType.TRANSFER) return false;
+
+        // Check if transaction type matches requested type
+        if (transactionType !== undefined && t.type !== transactionType) return false;
+
+        // Check if date is within range
+        const transactionDate = dayjs(t.date);
+        const isAfterStart = transactionDate.isAfter(startDate, 'day') || transactionDate.isSame(startDate, 'day');
+        const isBeforeEnd = transactionDate.isBefore(endDate, 'day') || transactionDate.isSame(endDate, 'day');
+        
+        return isAfterStart && isBeforeEnd;
+      })
       .reduce((acc, t) => {
         if (!acc[t.categoryId]) {
           acc[t.categoryId] = 0;
         }
-        acc[t.categoryId] += t.amount;
+        
+        // For expenses, only add positive amounts to show actual spending
+        // For income, use amount as is
+        const amount = t.type === TransactionType.EXPENSE ? Math.abs(t.amount) : t.amount;
+        acc[t.categoryId] += amount;
+        
         return acc;
       }, {} as Record<string, number>);
   };
