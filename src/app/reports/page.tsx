@@ -17,6 +17,7 @@ import {
   Paper,
   ThemeIcon,
   RingProgress,
+  Progress,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { 
@@ -334,14 +335,33 @@ export default function ReportsPage() {
             
             <Grid.Col span={{ base: 12, md: 4 }}>
               <Card withBorder padding="lg" radius="md">
-                <Text fw={500} mb="lg">Top Income Categories</Text>
-                <Stack>
-                  {incomeByCategory.slice(0, 5).map((item, index) => (
-                    <Group key={index} justify="space-between">
-                      <Text size="sm">{item.name}</Text>
-                      <Text fw={500} c="teal">{formatAmount(item.value)}</Text>
-                    </Group>
-                  ))}
+                <Text fw={500} mb="md">Top Income Categories</Text>
+                <Stack gap="xs">
+                  {incomeByCategory.slice(0, 5).map((item, index) => {
+                    const percentage = totalIncome ? (item.value / totalIncome) * 100 : 0;
+                    return (
+                      <div key={index}>
+                        <Group justify="space-between" mb={5}>
+                          <Group>
+                            <ThemeIcon color={item.color} variant="light" size="sm">
+                              <IconCash size={16} />
+                            </ThemeIcon>
+                            <Text size="sm">{item.name}</Text>
+                          </Group>
+                          <Text size="sm" fw={500}>
+                            {formatAmount(item.value)} <Text span c="dimmed" size="xs">({percentage.toFixed(1)}%)</Text>
+                          </Text>
+                        </Group>
+                        <Progress 
+                          value={percentage} 
+                          color={item.color}
+                          size="sm" 
+                          mb={2}
+                        />
+                        <Text size="xs" ta="right" c="dimmed">{percentage.toFixed(0)}%</Text>
+                      </div>
+                    );
+                  })}
                 </Stack>
               </Card>
             </Grid.Col>
@@ -380,14 +400,33 @@ export default function ReportsPage() {
             
             <Grid.Col span={{ base: 12, md: 4 }}>
               <Card withBorder padding="lg" radius="md">
-                <Text fw={500} mb="lg">Top Expense Categories</Text>
-                <Stack>
-                  {expenseByCategory.slice(0, 5).map((item, index) => (
-                    <Group key={index} justify="space-between">
-                      <Text size="sm">{item.name}</Text>
-                      <Text fw={500} c="red">{formatAmount(item.value)}</Text>
-                    </Group>
-                  ))}
+                <Text fw={500} mb="md">Top Expense Categories</Text>
+                <Stack gap="xs">
+                  {expenseByCategory.slice(0, 5).map((item, index) => {
+                    const percentage = totalExpenses ? (item.value / totalExpenses) * 100 : 0;
+                    return (
+                      <div key={index}>
+                        <Group justify="space-between" mb={5}>
+                          <Group>
+                            <ThemeIcon color={item.color} variant="light" size="sm">
+                              <IconReceipt size={16} />
+                            </ThemeIcon>
+                            <Text size="sm">{item.name}</Text>
+                          </Group>
+                          <Text size="sm" fw={500}>
+                            {formatAmount(item.value)} <Text span c="dimmed" size="xs">({percentage.toFixed(1)}%)</Text>
+                          </Text>
+                        </Group>
+                        <Progress 
+                          value={percentage} 
+                          color={item.color}
+                          size="sm" 
+                          mb={2}
+                        />
+                        <Text size="xs" ta="right" c="dimmed">{percentage.toFixed(0)}%</Text>
+                      </div>
+                    );
+                  })}
                 </Stack>
               </Card>
             </Grid.Col>
