@@ -49,6 +49,10 @@
       - Record account balance at a specific date
       - Used as reference points for historical balances
       - Override previous transaction calculations
+  
+  * Budget system
+  
+  * ✓ Default icons for all the categories (account categories, income/expense category, assets). And show the icons when relevant.
 
   * ✓ Demo Data
   * ✓ Allow to unarchive an account

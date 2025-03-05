@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Title,
   Container,
@@ -46,6 +46,8 @@ import {
   IconBuilding,
   IconCar,
   IconDeviceLaptop,
+  IconArrowUpRight,
+  IconArrowDownRight
 } from '@tabler/icons-react';
 import { useFinanceStore } from '@/store/financeStore';
 import { CURRENCIES, ASSET_TYPES } from '@/config/constants';
@@ -513,6 +515,15 @@ export default function SettingsPage() {
             {accountCategories.map(category => (
               <Group key={category.id} justify="space-between" mb="xs">
                 <Group>
+                  {category.icon ? (
+                    <ThemeIcon size="sm" variant="light" color="blue">
+                      {React.createElement(require('@tabler/icons-react')[`Icon${category.icon.charAt(0).toUpperCase() + category.icon.slice(1)}`] || IconCube)}
+                    </ThemeIcon>
+                  ) : (
+                    <ThemeIcon size="sm" variant="light" color="blue">
+                      <IconCube size={16} />
+                    </ThemeIcon>
+                  )}
                   <Text>{category.name}</Text>
                   {category.isDefault && (
                     <Text size="xs" c="dimmed">(Default)</Text>
@@ -571,6 +582,16 @@ export default function SettingsPage() {
               .map(category => (
                 <Group key={category.id} justify="space-between" mb="xs">
                   <Group>
+                    {category.icon ? (
+                      <ThemeIcon size="sm" variant="light" color="green">
+                        {/* Dynamically import icons based on the icon name */}
+                        {React.createElement(require('@tabler/icons-react')[`Icon${category.icon.charAt(0).toUpperCase() + category.icon.slice(1)}`] || IconCube)}
+                      </ThemeIcon>
+                    ) : (
+                      <ThemeIcon size="sm" variant="light" color="green">
+                        <IconArrowUpRight size={16} />
+                      </ThemeIcon>
+                    )}
                     <Text>{category.name}</Text>
                     {category.isDefault && (
                       <Text size="xs" c="dimmed">(Default)</Text>
@@ -605,6 +626,15 @@ export default function SettingsPage() {
               .map(category => (
                 <Group key={category.id} justify="space-between" mb="xs">
                   <Group>
+                    {category.icon ? (
+                      <ThemeIcon size="sm" variant="light" color="red">
+                        {React.createElement(require('@tabler/icons-react')[`Icon${category.icon.charAt(0).toUpperCase() + category.icon.slice(1)}`] || IconCube)}
+                      </ThemeIcon>
+                    ) : (
+                      <ThemeIcon size="sm" variant="light" color="red">
+                        <IconArrowDownRight size={16} />
+                      </ThemeIcon>
+                    )}
                     <Text>{category.name}</Text>
                     {category.isDefault && (
                       <Text size="xs" c="dimmed">(Default)</Text>
@@ -825,7 +855,10 @@ export default function SettingsPage() {
                           color={assetType.color || "gray"} 
                           variant="light"
                         >
-                          <IconCube size={16} />
+                          {assetType.icon ? 
+                            React.createElement(require('@tabler/icons-react')[`Icon${assetType.icon.charAt(0).toUpperCase() + assetType.icon.slice(1)}`] || IconCube)
+                            : <IconCube size={16} />
+                          }
                         </ThemeIcon>
                         <Text>{assetType.name}</Text>
                       </Group>
@@ -970,8 +1003,8 @@ export default function SettingsPage() {
           
           <TextInput
             label="Icon"
-            placeholder="Icon name (currently not displayed)"
-            description="For future use with icon library"
+            placeholder="Icon name (e.g., coins, diamond, gem)"
+            description="Enter a Tabler Icons name without the 'Icon' prefix"
             value={assetTypeFormData.icon}
             onChange={(e) => setAssetTypeFormData({ ...assetTypeFormData, icon: e.currentTarget.value })}
           />

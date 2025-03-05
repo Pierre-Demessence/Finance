@@ -41,6 +41,7 @@ import AccountForm from '@/components/AccountForm';
 import TransactionForm from '@/components/TransactionForm';
 import Link from 'next/link';
 import { notifications } from '@mantine/notifications';
+import { getIconByName } from '@/utils/iconUtils';
 
 export default function AccountsPage() {
   const { accounts, accountCategories, deleteAccount, archiveAccount, unarchiveAccount } = useFinanceStore();
@@ -275,7 +276,14 @@ export default function AccountsPage() {
                         )}
                       </Group>
                     </Table.Td>
-                    <Table.Td>{category?.name || 'Unknown'}</Table.Td>
+                    <Table.Td>
+                      <Group gap="xs">
+                        <ThemeIcon size="sm" variant="light">
+                          {category?.icon ? getIconByName(category.icon) : <IconWallet size={14} />}
+                        </ThemeIcon>
+                        <Text>{category?.name || 'Unknown'}</Text>
+                      </Group>
+                    </Table.Td>
                     <Table.Td>{account.currency}</Table.Td>
                     <Table.Td>
                       <Group gap="xs" wrap="nowrap">

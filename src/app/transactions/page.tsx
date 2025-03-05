@@ -48,6 +48,7 @@ import TransactionForm from '@/components/TransactionForm';
 import Link from 'next/link';
 import { notifications } from '@mantine/notifications';
 import dayjs from 'dayjs';
+import { getIconByName } from '@/utils/iconUtils';
 
 const TRANSACTIONS_PER_PAGE = 10;
 const PAGE_SIZE_OPTIONS = [
@@ -371,6 +372,26 @@ export default function TransactionsPage() {
                       </Table.Td>
                       <Table.Td>
                         <Group gap="xs">
+                          <ThemeIcon 
+                            size="sm" 
+                            variant="light" 
+                            color={
+                              transaction.type === TransactionType.INCOME 
+                                ? 'teal' 
+                                : transaction.type === TransactionType.EXPENSE
+                                ? 'red'
+                                : 'blue'
+                            }
+                          >
+                            {category?.icon ? 
+                              getIconByName(category.icon) : 
+                              transaction.type === TransactionType.INCOME ? 
+                                getIconByName('plus') :
+                                transaction.type === TransactionType.EXPENSE ?
+                                  getIconByName('minus') :
+                                  getIconByName('arrows-exchange')
+                            }
+                          </ThemeIcon>
                           {category?.name || 'Uncategorized'}
                           <Badge 
                             color={

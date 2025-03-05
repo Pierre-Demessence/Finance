@@ -92,31 +92,37 @@ export const ASSET_TYPES = {
     name: 'Cryptocurrency',
     description: 'Digital or virtual currency secured by cryptography',
     examples: 'Bitcoin, Ethereum, Ripple',
+    icon: 'currency-bitcoin'
   },
   [AssetType.STOCK]: {
     name: 'Stock',
     description: 'Ownership shares of a company',
     examples: 'Apple, Tesla, Amazon',
+    icon: 'chart-candlestick'
   },
   [AssetType.REAL_ESTATE]: {
     name: 'Real Estate',
     description: 'Land and buildings owned',
     examples: 'House, Apartment, Land',
+    icon: 'building'
   },
   [AssetType.VEHICLE]: {
     name: 'Vehicle',
     description: 'Cars, motorcycles, boats and other vehicles',
     examples: 'Car, Motorcycle, Boat',
+    icon: 'car'
   },
   [AssetType.ELECTRONICS]: {
     name: 'Electronics',
     description: 'Electronic devices with significant value',
     examples: 'Computer, Smartphone, TV',
+    icon: 'device-laptop'
   },
   [AssetType.OTHER]: {
     name: 'Other',
     description: 'Any other valuable asset',
     examples: 'Collectibles, Furniture, Jewelry',
+    icon: 'box'
   },
 };
 
