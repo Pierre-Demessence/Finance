@@ -197,31 +197,5 @@
       "notes": "Personal vehicle",
       "purchasePrice": 25000
     }
-  ],
-  "medicalExpenses": [
-    {
-      "description": "Doctor Visit",
-      "daysAgo": 30,
-      "categoryId": "tcat_health",
-      "fromAccountId": "checking",
-      "minAmount": 75,
-      "maxAmount": 175
-    },
-    {
-      "description": "Doctor Visit",
-      "daysAgo": 120,
-      "categoryId": "tcat_health",
-      "fromAccountId": "checking",
-      "minAmount": 75,
-      "maxAmount": 175
-    },
-    {
-      "description": "Doctor Visit",
-      "daysAgo": 210,
-      "categoryId": "tcat_health",
-      "fromAccountId": "checking",
-      "minAmount": 75,
-      "maxAmount": 175
-    }
   ]
 }
