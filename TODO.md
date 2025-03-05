@@ -26,6 +26,7 @@
 
 * Others:
   * Fix theme selection flickering on page load. (It starts with light theme, then swith to dark theme)
+  * Fix area charts not having any area (nor lines)
 
 
 # Features to Implements:
@@ -41,6 +42,9 @@
   * ✓ Clicking on the Account name in the "From/To" column should link to the Account Details Page (not when it's External of course).
   * ✓ Pagination for transaction list
 
+* Assets Page:
+  * Show acquisition value
+
 * Reports Page:
   * ✓ Modify Top Income/Expense Categories so it looks like the Assets Summary card in the Assets Page.
 
@@ -55,5 +59,8 @@
   * ✓ Default icons for all the categories (account categories, income/expense category, assets). And show the icons when relevant.
 
   * ✓ Demo Data
+  * Can configure demo data generation (how many transactions, timespan, etc..) in a config file (outsidee of dataSlice.ts directly).
   * ✓ Allow to unarchive an account
   * ✓ Rework README
+  * Refactor code and make components to avoid duplications.
+  * Do something with tags, notes, recurring transaction checkbox?

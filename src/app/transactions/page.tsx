@@ -353,6 +353,7 @@ export default function TransactionsPage() {
                 <Table.Tr>
                   <Table.Th>Date</Table.Th>
                   <Table.Th>Category</Table.Th>
+                  <Table.Th>Type</Table.Th>
                   <Table.Th>Description</Table.Th>
                   <Table.Th>Amount</Table.Th>
                   <Table.Th>Account(s)</Table.Th>
@@ -393,7 +394,9 @@ export default function TransactionsPage() {
                             }
                           </ThemeIcon>
                           {category?.name || 'Uncategorized'}
-                          <Badge 
+                        </Group>
+                      </Table.Td>
+                      <Table.Td>                          <Badge 
                             color={
                               transaction.type === TransactionType.INCOME 
                                 ? 'teal' 
@@ -404,9 +407,7 @@ export default function TransactionsPage() {
                             size="xs"
                           >
                             {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
-                          </Badge>
-                        </Group>
-                      </Table.Td>
+                          </Badge></Table.Td>
                       <Table.Td>{transaction.description || '-'}</Table.Td>
                       <Table.Td>
                         <Text 
