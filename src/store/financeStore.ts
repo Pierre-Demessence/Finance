@@ -14,7 +14,11 @@ import {
   AssetType,
   CustomAssetType
 } from '@/models';
-import { CURRENCIES } from '@/config/constants';
+import { 
+  DEFAULT_SETTINGS,
+  DEFAULT_ACCOUNT_CATEGORIES,
+  DEFAULT_TRANSACTION_CATEGORIES
+} from '@/config/constants';
 import demoData from '@/data/demoData.json';
 
 export interface FinanceStore {
@@ -66,45 +70,6 @@ export interface FinanceStore {
   resetData: () => void;
   loadDemoData: () => void;
 }
-
-// Default settings
-const DEFAULT_SETTINGS: Settings = {
-  baseCurrency: 'EUR',
-  theme: 'dark',
-  dateFormat: 'DD/MM/YYYY',
-  decimalPlaces: 2
-};
-
-// Default account categories
-const DEFAULT_ACCOUNT_CATEGORIES: AccountCategory[] = [
-  { id: 'cat_banking', name: 'Banking', icon: 'building-bank', isDefault: true },
-  { id: 'cat_cash', name: 'Cash', icon: 'cash', isDefault: true },
-  { id: 'cat_investment', name: 'Investments', icon: 'chart-line', isDefault: true },
-  { id: 'cat_credit', name: 'Credit Cards', icon: 'credit-card', isDefault: true },
-  { id: 'cat_loan', name: 'Loans', icon: 'cash-banknote', isDefault: true }
-];
-
-// Default transaction categories
-const DEFAULT_TRANSACTION_CATEGORIES: TransactionCategory[] = [
-  // Income categories
-  { id: 'tcat_salary', name: 'Salary', type: TransactionType.INCOME, icon: 'wallet', isDefault: true },
-  { id: 'tcat_interest', name: 'Interest', type: TransactionType.INCOME, icon: 'chart-line', isDefault: true },
-  { id: 'tcat_gift', name: 'Gifts', type: TransactionType.INCOME, icon: 'gift', isDefault: true },
-  { id: 'tcat_other_income', name: 'Other Income', type: TransactionType.INCOME, icon: 'plus', isDefault: true },
-  
-  // Expense categories
-  { id: 'tcat_housing', name: 'Housing', type: TransactionType.EXPENSE, icon: 'home', isDefault: true },
-  { id: 'tcat_food', name: 'Food & Dining', type: TransactionType.EXPENSE, icon: 'chef-hat', isDefault: true },
-  { id: 'tcat_transportation', name: 'Transportation', type: TransactionType.EXPENSE, icon: 'car', isDefault: true },
-  { id: 'tcat_utilities', name: 'Utilities', type: TransactionType.EXPENSE, icon: 'bulb', isDefault: true },
-  { id: 'tcat_shopping', name: 'Shopping', type: TransactionType.EXPENSE, icon: 'shopping-cart', isDefault: true },
-  { id: 'tcat_entertainment', name: 'Entertainment', type: TransactionType.EXPENSE, icon: 'device-tv', isDefault: true },
-  { id: 'tcat_health', name: 'Health & Medical', type: TransactionType.EXPENSE, icon: 'stethoscope', isDefault: true },
-  { id: 'tcat_other_expense', name: 'Other Expenses', type: TransactionType.EXPENSE, icon: 'minus', isDefault: true },
-  
-  // Transfer category
-  { id: 'tcat_transfer', name: 'Transfer', type: TransactionType.TRANSFER, icon: 'arrows-exchange', isDefault: true },
-];
 
 export const useFinanceStore = create<FinanceStore>()(
   persist(

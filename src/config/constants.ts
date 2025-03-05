@@ -43,41 +43,41 @@ export const EXCHANGE_RATES = {
   RUB: 102.50,
 };
 
-// Default account categories
+// Default account categories (merged from both files)
 export const DEFAULT_ACCOUNT_CATEGORIES: AccountCategory[] = [
-  { id: 'savings', name: 'Savings', isDefault: true, icon: 'piggy-bank' },
-  { id: 'checking', name: 'Checking', isDefault: true, icon: 'credit-card' },
-  { id: 'investment', name: 'Investment', isDefault: true, icon: 'chart-line' },
-  { id: 'crypto', name: 'Crypto', isDefault: true, icon: 'currency-bitcoin' },
-  { id: 'real-estate', name: 'Real Estate', isDefault: true, icon: 'building' },
-  { id: 'cash', name: 'Cash', isDefault: true, icon: 'wallet' },
-  { id: 'other', name: 'Other', isDefault: true, icon: 'archive' },
+  { id: 'cat_banking', name: 'Banking', icon: 'wallet', isDefault: true },
+  { id: 'cat_cash', name: 'Cash', icon: 'cash', isDefault: true },
+  { id: 'cat_investment', name: 'Investments', icon: 'chart-line', isDefault: true },
+  { id: 'cat_credit', name: 'Credit Cards', icon: 'credit-card', isDefault: true },
+  { id: 'cat_loan', name: 'Loans', icon: 'cash-banknote', isDefault: true }
 ];
 
-// Default transaction categories for income
-export const DEFAULT_INCOME_CATEGORIES: TransactionCategory[] = [
-  { id: 'salary', name: 'Salary', type: TransactionType.INCOME, isDefault: true, icon: 'briefcase' },
-  { id: 'interest', name: 'Interest', type: TransactionType.INCOME, isDefault: true, icon: 'percentage' },
-  { id: 'dividends', name: 'Dividends', type: TransactionType.INCOME, isDefault: true, icon: 'chart-pie' },
-  { id: 'gifts', name: 'Gifts', type: TransactionType.INCOME, isDefault: true, icon: 'gift' },
-  { id: 'other-income', name: 'Other', type: TransactionType.INCOME, isDefault: true, icon: 'plus' },
-];
-
-// Default transaction categories for expenses
-export const DEFAULT_EXPENSE_CATEGORIES: TransactionCategory[] = [
-  { id: 'food', name: 'Food', type: TransactionType.EXPENSE, isDefault: true, icon: 'utensils' },
-  { id: 'housing', name: 'Housing', type: TransactionType.EXPENSE, isDefault: true, icon: 'home' },
-  { id: 'transportation', name: 'Transportation', type: TransactionType.EXPENSE, isDefault: true, icon: 'car' },
-  { id: 'entertainment', name: 'Entertainment', type: TransactionType.EXPENSE, isDefault: true, icon: 'film' },
-  { id: 'utilities', name: 'Utilities', type: TransactionType.EXPENSE, isDefault: true, icon: 'bolt' },
-  { id: 'healthcare', name: 'Healthcare', type: TransactionType.EXPENSE, isDefault: true, icon: 'heartbeat' },
-  { id: 'education', name: 'Education', type: TransactionType.EXPENSE, isDefault: true, icon: 'book' },
-  { id: 'shopping', name: 'Shopping', type: TransactionType.EXPENSE, isDefault: true, icon: 'shopping-bag' },
-  { id: 'other-expense', name: 'Other', type: TransactionType.EXPENSE, isDefault: true, icon: 'minus' },
+// Default transaction categories (merged from both files)
+export const DEFAULT_TRANSACTION_CATEGORIES: TransactionCategory[] = [
+  // Income categories
+  { id: 'tcat_salary', name: 'Salary', type: TransactionType.INCOME, icon: 'wallet', isDefault: true },
+  { id: 'tcat_interest', name: 'Interest', type: TransactionType.INCOME, icon: 'percentage', isDefault: true },
+  { id: 'tcat_dividends', name: 'Dividends', type: TransactionType.INCOME, icon: 'chart-pie', isDefault: true },
+  { id: 'tcat_gift', name: 'Gifts', type: TransactionType.INCOME, icon: 'gift', isDefault: true },
+  { id: 'tcat_other_income', name: 'Other Income', type: TransactionType.INCOME, icon: 'plus', isDefault: true },
+  
+  // Expense categories
+  { id: 'tcat_housing', name: 'Housing', type: TransactionType.EXPENSE, icon: 'home', isDefault: true },
+  { id: 'tcat_food', name: 'Food & Dining', type: TransactionType.EXPENSE, icon: 'chef-hat', isDefault: true },
+  { id: 'tcat_transportation', name: 'Transportation', type: TransactionType.EXPENSE, icon: 'car', isDefault: true },
+  { id: 'tcat_utilities', name: 'Utilities', type: TransactionType.EXPENSE, icon: 'bulb', isDefault: true },
+  { id: 'tcat_shopping', name: 'Shopping', type: TransactionType.EXPENSE, icon: 'shopping-cart', isDefault: true },
+  { id: 'tcat_entertainment', name: 'Entertainment', type: TransactionType.EXPENSE, icon: 'device-tv', isDefault: true },
+  { id: 'tcat_health', name: 'Health & Medical', type: TransactionType.EXPENSE, icon: 'stethoscope', isDefault: true },
+  { id: 'tcat_education', name: 'Education', type: TransactionType.EXPENSE, icon: 'book', isDefault: true },
+  { id: 'tcat_other_expense', name: 'Other Expenses', type: TransactionType.EXPENSE, icon: 'minus', isDefault: true },
+  
+  // Transfer category
+  { id: 'tcat_transfer', name: 'Transfer', type: TransactionType.TRANSFER, icon: 'arrows-exchange', isDefault: true },
 ];
 
 // Default user settings
-export const DEFAULT_USER_SETTINGS: Settings = {
+export const DEFAULT_SETTINGS: Settings = {
   baseCurrency: 'EUR',
   dateFormat: 'DD/MM/YYYY',
   theme: 'light',
