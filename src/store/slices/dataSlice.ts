@@ -117,8 +117,8 @@ export const createDataSlice: StateCreator<
        // Generate transactions for the past year
        const demoTransactions: Transaction[] = [];
         
-       // Add monthly recurring transactions for the past 12 months
-       for (let i = 0; i < 12; i++) {
+       // Add monthly recurring transactions for the past 120 months
+       for (let i = 0; i < 120; i++) {
          for (const recurTrans of demoData.recurringTransactions) {
            const transactionDate = new Date();
            transactionDate.setMonth(now.getMonth() - i);
@@ -149,9 +149,9 @@ export const createDataSlice: StateCreator<
         return date;
       };
        
-       // Add random expenses over the past year using the data from JSON
-       for (let i = 0; i < 50; i++) {
-         const daysAgo = Math.floor(Math.random() * 365);
+       // Add 500 random expenses over the past 10 years using the data from JSON
+       for (let i = 0; i < 500; i++) {
+         const daysAgo = Math.floor(Math.random() * 3650); // Random days in the past 10 years
          const transactionDate = getDateInPast(daysAgo);
          
          const expenseType = demoData.randomExpenses[Math.floor(Math.random() * demoData.randomExpenses.length)];
@@ -175,7 +175,7 @@ export const createDataSlice: StateCreator<
       // Process assets with mapped account IDs
       const demoAssets: Asset[] = demoData.assets.map(asset => {
         const id = uuidv4();
-        const purchaseDate = new Date(asset.purchaseDate || now);
+        const purchaseDate = getDateInPast(asset.acquisitionDateDaysAgo) || now;
         
         return {
           id,

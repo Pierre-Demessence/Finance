@@ -136,6 +136,51 @@
       "fromAccountId": "checking",
       "toAccountId": "savings",
       "dayOfMonth": 26
+    },
+    {
+      "description": "Investment Deposit",
+      "type": "transfer",
+      "amount": 200,
+      "categoryId": "tcat_transfer",
+      "fromAccountId": "checking",
+      "toAccountId": "investment",
+      "dayOfMonth": 26
+    },
+    {
+      "description": "Streaming Services",
+      "type": "expense",
+      "amount": 25,
+      "categoryId": "tcat_entertainment",
+      "fromAccountId": "creditcard",
+      "toAccountId": null,
+      "dayOfMonth": 3
+    },
+    {
+      "description": "Gym Membership",
+      "type": "expense",
+      "amount": 45,
+      "categoryId": "tcat_health",
+      "fromAccountId": "creditcard",
+      "toAccountId": null,
+      "dayOfMonth": 5
+    },
+    {
+      "description": "Phone Bill",
+      "type": "expense",
+      "amount": 40,
+      "categoryId": "tcat_utilities",
+      "fromAccountId": "checking",
+      "toAccountId": null,
+      "dayOfMonth": 12
+    },
+    {
+      "description": "Side Gig Income",
+      "type": "income",
+      "amount": 500,
+      "categoryId": "tcat_other_income",
+      "toAccountId": "checking",
+      "fromAccountId": null,
+      "dayOfMonth": 15
     }
   ],
   "randomExpenses": [
@@ -156,6 +201,60 @@
       "min": 10,
       "max": 50,
       "descriptions": ["Movie Theater", "Streaming Service", "Concert"]
+    },
+    {
+      "category": "tcat_transportation",
+      "min": 15,
+      "max": 60,
+      "descriptions": ["Gas Station", "Public Transport", "Taxi Service", "Car Maintenance"]
+    },
+    {
+      "category": "tcat_utilities",
+      "min": 10,
+      "max": 40,
+      "descriptions": ["Mobile App Subscription", "Cloud Storage", "Software License"]
+    },
+    {
+      "category": "tcat_health",
+      "min": 20,
+      "max": 150,
+      "descriptions": ["Pharmacy", "Doctor Visit", "Health Insurance", "Gym Membership"]
+    },
+    {
+      "category": "tcat_education",
+      "min": 15,
+      "max": 200,
+      "descriptions": ["Online Course", "Books", "Training Workshop", "Professional Certification"]
+    },
+    {
+      "category": "tcat_shopping",
+      "min": 100,
+      "max": 500,
+      "descriptions": ["Home Decor", "Furniture", "Home Appliances", "Garden Supplies"]
+    },
+    {
+      "category": "tcat_entertainment",
+      "min": 50,
+      "max": 200,
+      "descriptions": ["Theme Park", "Sports Event", "Theater Show", "Festival Tickets"]
+    },
+    {
+      "category": "tcat_health",
+      "min": 50,
+      "max": 300,
+      "descriptions": ["Dental Care", "Eye Care", "Specialist Visit", "Medical Test"]
+    },
+    {
+      "category": "tcat_education",
+      "min": 200,
+      "max": 1000,
+      "descriptions": ["Semester Course", "Programming Bootcamp", "Language Course", "Industry Conference"]
+    },
+    {
+      "category": "tcat_other_expense",
+      "min": 20,
+      "max": 500,
+      "descriptions": ["Gift Purchase", "Charity Donation", "Professional Service", "Home Service", "Pet Expense"]
     }
   ],
   "assets": [
@@ -196,6 +295,133 @@
       "acquisitionDateDaysAgo": 730,
       "notes": "Personal vehicle",
       "purchasePrice": 25000
+    },
+    {
+      "name": "ETF Portfolio",
+      "type": "stock",
+      "accountId": "investment",
+      "description": "S&P 500 Index Fund",
+      "quantity": 50,
+      "currentPrice": 45,
+      "acquisitionPrice": 40,
+      "acquisitionDateDaysAgo": 365,
+      "notes": "Index fund investment",
+      "symbol": "SPY",
+      "purchasePrice": 40
+    },
+    {
+      "name": "Ethereum",
+      "type": "cryptocurrency",
+      "accountId": "investment",
+      "description": "Ethereum Investment",
+      "quantity": 2.5,
+      "currentPrice": 2200,
+      "acquisitionPrice": 1800,
+      "acquisitionDateDaysAgo": 90,
+      "notes": "Crypto portfolio diversification",
+      "symbol": "ETH",
+      "purchasePrice": 1800
+    },
+    {
+      "name": "Gaming PC",
+      "type": "electronics",
+      "accountId": "cash",
+      "description": "High-end desktop computer",
+      "quantity": 1,
+      "currentPrice": 1800,
+      "acquisitionPrice": 2500,
+      "acquisitionDateDaysAgo": 300,
+      "notes": "Personal computer setup",
+      "purchasePrice": 2500
+    },
+    {
+      "name": "Gold Investment",
+      "type": "other",
+      "accountId": "investment",
+      "description": "Physical gold bullion",
+      "quantity": 2,
+      "currentPrice": 1950,
+      "acquisitionPrice": 1850,
+      "acquisitionDateDaysAgo": 180,
+      "notes": "Precious metal investment",
+      "symbol": "XAU",
+      "purchasePrice": 1850
+    },
+    {
+      "name": "Rental Property",
+      "type": "real_estate",
+      "accountId": "investment",
+      "description": "2-bedroom apartment for rental income",
+      "quantity": 1,
+      "currentPrice": 250000,
+      "acquisitionPrice": 220000,
+      "acquisitionDateDaysAgo": 730,
+      "notes": "Investment property with monthly rental income",
+      "purchasePrice": 220000
+    },
+    {
+      "name": "Apple Stock",
+      "type": "stock",
+      "accountId": "investment",
+      "description": "Apple Inc. shares",
+      "quantity": 25,
+      "currentPrice": 180,
+      "acquisitionPrice": 150,
+      "acquisitionDateDaysAgo": 400,
+      "notes": "Blue chip stock investment",
+      "symbol": "AAPL",
+      "purchasePrice": 150
+    },
+    {
+      "name": "Microsoft Stock",
+      "type": "stock",
+      "accountId": "investment",
+      "description": "Microsoft Corporation shares",
+      "quantity": 20,
+      "currentPrice": 330,
+      "acquisitionPrice": 290,
+      "acquisitionDateDaysAgo": 300,
+      "notes": "Tech sector investment",
+      "symbol": "MSFT",
+      "purchasePrice": 290
+    },
+    {
+      "name": "Solana",
+      "type": "cryptocurrency",
+      "accountId": "investment",
+      "description": "Solana Investment",
+      "quantity": 50,
+      "currentPrice": 95,
+      "acquisitionPrice": 65,
+      "acquisitionDateDaysAgo": 120,
+      "notes": "Alternative cryptocurrency investment",
+      "symbol": "SOL",
+      "purchasePrice": 65
+    },
+    {
+      "name": "MacBook Pro",
+      "type": "electronics",
+      "accountId": "cash",
+      "description": "16-inch MacBook Pro M1",
+      "quantity": 1,
+      "currentPrice": 2200,
+      "acquisitionPrice": 2800,
+      "acquisitionDateDaysAgo": 180,
+      "notes": "Work laptop",
+      "purchasePrice": 2800
+    },
+    {
+      "name": "Corporate Bonds ETF",
+      "type": "stock",
+      "accountId": "investment",
+      "description": "Corporate Bond ETF Portfolio",
+      "quantity": 100,
+      "currentPrice": 52,
+      "acquisitionPrice": 50,
+      "acquisitionDateDaysAgo": 400,
+      "notes": "Fixed income investment",
+      "symbol": "LQD",
+      "purchasePrice": 50
     }
   ]
 }
