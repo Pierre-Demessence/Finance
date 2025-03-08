@@ -1,6 +1,5 @@
 import { 
   IconWallet, 
-  IconChart, 
   IconChartPie, 
   IconChartLine, 
   IconPigMoney,
@@ -11,7 +10,6 @@ import {
   IconPercentage,
   IconGift,
   IconPlus,
-  IconUtensils,
   IconHome,
   IconCar,
   IconBolt,
@@ -26,9 +24,7 @@ import {
   IconCreditCard,
   IconCashBanknote,
   IconStethoscope,
-  IconCash,
   IconDeviceLaptop,
-  IconBox,
   IconCube
 } from '@tabler/icons-react';
 import React from 'react';

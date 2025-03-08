@@ -51,10 +51,13 @@ const PAGE_SIZE_OPTIONS = [
   { value: "100", label: "100 per page" }
 ];
 
-export default function AccountDetailsPage({ params }: { params: { id: string } }) {
-  // Might need to do differently as it shows problems in the code but works in the browser
-  const { id : accountId } = use(params);
-  
+type Params = {
+  id: string;
+};
+
+export default function AccountDetailsPage({ params }: { params: Params }) {
+  const { id: accountId } = params;
+
   const { accounts, transactions, accountCategories, transactionCategories, deleteAccount, archiveAccount, unarchiveAccount } = useFinanceStore();
   const { formatAmount } = useCurrency();
   const { calculateAccountBalance } = useNetWorth();
@@ -389,7 +392,7 @@ export default function AccountDetailsPage({ params }: { params: { id: string } 
                         </td>
                         <td style={{ padding: '8px 16px' }}>
                           {otherAccount ? (
-                            <Link href={`/accounts/${otherAccount.id}`} style={{ color: 'inherit', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+                            <Link href={`/accounts/${otherAccount.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                               {otherAccount.name}
                             </Link>
                           ) : 'External'}

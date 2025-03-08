@@ -99,7 +99,7 @@ export const DEMO_PRESETS = {
   standard: DEFAULT_DEMO_CONFIG,
   extended: {
     transactions: {
-      recurringMonthsCount: 240, // 20 years
+      recurringMonthsCount: 24, // 20 years
       randomExpensesCount: 1000,
       maxDaysInPast: 7300, // ~20 years
     },
@@ -126,7 +126,7 @@ export const DEMO_PRESETS = {
       priceVariationPercent: 10, // 10% random variation
     },
     dateRanges: {
-      historyYears: 10,
+      historyYears: 2,
     },
   },
 };

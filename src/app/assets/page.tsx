@@ -10,15 +10,12 @@ import {
   Text,
   SimpleGrid,
   Badge,
-  Progress,
   ActionIcon,
   Menu,
   Modal,
   Tabs,
-  NumberInput,
   Grid,
   ThemeIcon,
-  Stack
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { 
@@ -35,13 +32,17 @@ import {
   IconDeviceLaptop,
   IconCube,
 } from '@tabler/icons-react';
-import { DonutChart } from '@mantine/charts';
 import { useFinanceStore } from '@/store/financeStore';
 import { useCurrency } from '@/hooks/useFinanceUtils';
 import { Asset, AssetType } from '@/models';
 import { ASSET_TYPES } from '@/config/constants';
 import AssetForm from '@/components/AssetForm';
-import ChartTooltip from '@/components/ChartTooltip';
+// Import our new components
+import EmptyStateCard from '@/components/ui/EmptyStateCard';
+import CategoryDistribution from '@/components/ui/CategoryDistribution';
+import ActionMenu from '@/components/ui/ActionMenu';
+import ModalWrapper from '@/components/ui/ModalWrapper';
+import { formatPercentage } from '@/utils/financeUtils';
 
 export default function AssetsPage() {
   const [opened, { open, close }] = useDisclosure(false);
@@ -83,8 +84,12 @@ export default function AssetsPage() {
     let typeKey = asset.type;
     
     // For custom asset types, use the custom type ID as the key
-    if (asset.type === AssetType.CUSTOM && asset.customTypeId) {
-      typeKey = `custom_${asset.customTypeId}`;
+    if (asset.type === AssetType.CUSTOM) {
+      const customTypeId = asset.customTypeId;
+      const customType = customAssetTypes.find(t => t.id === customTypeId);
+      if (customType) {
+        typeKey = `custom_${customType.id}` as AssetType;
+      }
     }
     
     if (!acc[typeKey]) {
@@ -100,35 +105,6 @@ export default function AssetsPage() {
     
     return acc;
   }, { total: 0 } as Record<string, { count: number; value: number }> & { total: number });
-  
-  // Prepare data for the donut chart
-  const donutData = Object.entries(assetValues)
-    .filter(([key]) => key !== 'total')
-    .map(([type, data]) => {
-      let name = type;
-      let color = '#757575'; // Default gray
-      
-      // Handle standard asset types
-      if (ASSET_TYPES[type as keyof typeof ASSET_TYPES]) {
-        name = ASSET_TYPES[type as keyof typeof ASSET_TYPES].name;
-        color = getAssetTypeColor(type as AssetType);
-      } 
-      // Handle custom asset types
-      else if (type.startsWith('custom_')) {
-        const customTypeId = type.replace('custom_', '');
-        const customType = customAssetTypes.find(t => t.id === customTypeId);
-        if (customType) {
-          name = customType.name;
-          color = customType.color || '#757575';
-        }
-      }
-      
-      return {
-        name,
-        value: typeof data === 'number' ? data : data.value,
-        color,
-      };
-    });
   
   // Get color for asset type
   function getAssetTypeColor(type: AssetType | string): string {
@@ -189,6 +165,37 @@ export default function AssetsPage() {
     }
   }
   
+  // Prepare data for the category distribution
+  const distributionData = Object.entries(assetValues)
+    .filter(([key]) => key !== 'total')
+    .map(([type, data]) => {
+      let name = type;
+      let color = '#757575'; // Default gray
+      
+      // Handle standard asset types
+      if (ASSET_TYPES[type as keyof typeof ASSET_TYPES]) {
+        name = ASSET_TYPES[type as keyof typeof ASSET_TYPES].name;
+        color = getAssetTypeColor(type as AssetType);
+      } 
+      // Handle custom asset types
+      else if (type.startsWith('custom_')) {
+        const customTypeId = type.replace('custom_', '');
+        const customType = customAssetTypes.find(t => t.id === customTypeId);
+        if (customType) {
+          name = customType.name;
+          color = customType.color || '#757575';
+        }
+      }
+      
+      return {
+        name,
+        value: typeof data === 'number' ? data : data.value,
+        color,
+        icon: getAssetTypeIcon(type.startsWith('custom_') ? type.replace('custom_', '') : type),
+        count: typeof data === 'number' ? 1 : data.count
+      };
+    });
+  
   // Handler to edit asset
   const handleEditAsset = (asset: Asset) => {
     setEditAsset(asset);
@@ -201,6 +208,44 @@ export default function AssetsPage() {
     close();
   };
 
+  // Get empty state description based on active tab
+  const getEmptyStateDescription = () => {
+    if (activeTab === 'all') {
+      return "You haven't added any assets yet. Click 'Add Asset' to create your first asset.";
+    }
+    
+    // For standard asset types
+    if (ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]) {
+      return `You don't have any ${ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]?.name.toLowerCase() || 'assets'} yet.`;
+    }
+    
+    // For custom asset types
+    const customType = customAssetTypes.find(t => t.id === activeTab);
+    if (customType) {
+      return `You don't have any ${customType.name.toLowerCase()} assets yet.`;
+    }
+    
+    return "You don't have any assets in this category yet.";
+  };
+  
+  // Get action label for the empty state button
+  const getActionLabel = () => {
+    if (activeTab === 'all') return 'Add Asset';
+    
+    // For standard asset types
+    if (ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]) {
+      return `Add ${ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]?.name || 'Asset'}`;
+    }
+    
+    // For custom asset types
+    const customType = customAssetTypes.find(t => t.id === activeTab);
+    if (customType) {
+      return `Add ${customType.name}`;
+    }
+    
+    return 'Add Asset';
+  };
+
   return (
     <Container size="xl">
       <Group justify="space-between" mb="md">
@@ -210,112 +255,15 @@ export default function AssetsPage() {
         </Button>
       </Group>
       
-      <Grid mb="xl">
-        <Grid.Col span={{ base: 12, md: 8 }}>
-          <Card withBorder padding="lg" radius="md">
-            <Group justify="space-between" mb="lg">
-              <Text fw={500}>Asset Distribution</Text>
-              <Text fw={700}>{formatAmount(assetValues.total)}</Text>
-            </Group>
-            
-            <DonutChart
-              h={240}
-              data={donutData}
-              withLabels
-              withTooltip
-              tooltipProps={{
-                content: ({ payload }) => {
-                  if (!payload?.length) return null;
-                  const item = payload[0].payload;
-                  return (
-                    <ChartTooltip
-                      label={item.name}
-                      value={formatAmount(item.value)}
-                      color={item.color}
-                      icon={<IconChartPie size={16} />}
-                      secondaryLabel="Percentage"
-                      secondaryValue={`${((item.value / assetValues.total) * 100).toFixed(1)}%`}
-                    />
-                  );
-                },
-              }}
-            />
-          </Card>
-        </Grid.Col>
-        
-        <Grid.Col span={{ base: 12, md: 4 }}>
-          <Card withBorder padding="lg" radius="md">
-            <Text fw={500} mb="md">Assets Summary</Text>
-            <Stack gap="xs">
-              {/* Standard Asset Types */}
-              {Object.entries(ASSET_TYPES).map(([type, info]) => {
-                const assetType = type as AssetType;
-                const value = assetValues[assetType]?.value || 0;
-                const count = assetValues[assetType]?.count || 0;
-                const percentage = assetValues.total ? (value / assetValues.total) * 100 : 0;
-                
-                return (
-                  <div key={type}>
-                    <Group justify="space-between" mb={5}>
-                      <Group>
-                        <ThemeIcon color={getAssetTypeColor(assetType)} variant="light" size="sm">
-                          {getAssetTypeIcon(assetType)}
-                        </ThemeIcon>
-                        <Text size="sm">{info.name}</Text>
-                      </Group>
-                      <Text size="sm" fw={500}>
-                        {formatAmount(value)} <Text span c="dimmed" size="xs">({count})</Text>
-                      </Text>
-                    </Group>
-                    <Progress 
-                      value={percentage} 
-                      color={getAssetTypeColor(assetType)} 
-                      size="sm" 
-                      mb={2}
-                    />
-                    <Text size="xs" ta="right" c="dimmed">{percentage.toFixed(0)}%</Text>
-                  </div>
-                );
-              })}
-              
-              {/* Custom Asset Types */}
-              {customAssetTypes.map(customType => {
-                const typeKey = `custom_${customType.id}`;
-                const value = assetValues[typeKey]?.value || 0;
-                const count = assetValues[typeKey]?.count || 0;
-                const percentage = assetValues.total ? (value / assetValues.total) * 100 : 0;
-                
-                return (
-                  <div key={customType.id}>
-                    <Group justify="space-between" mb={5}>
-                      <Group>
-                        <ThemeIcon 
-                          color={customType.color || '#757575'} 
-                          variant="light" 
-                          size="sm"
-                        >
-                          {getAssetTypeIcon(customType.id)}
-                        </ThemeIcon>
-                        <Text size="sm">{customType.name}</Text>
-                      </Group>
-                      <Text size="sm" fw={500}>
-                        {formatAmount(value)} <Text span c="dimmed" size="xs">({count})</Text>
-                      </Text>
-                    </Group>
-                    <Progress 
-                      value={percentage} 
-                      color={customType.color || '#757575'} 
-                      size="sm" 
-                      mb={2}
-                    />
-                    <Text size="xs" ta="right" c="dimmed">{percentage.toFixed(0)}%</Text>
-                  </div>
-                );
-              })}
-            </Stack>
-          </Card>
-        </Grid.Col>
-      </Grid>
+      {/* Use the CategoryDistribution component */}
+      <CategoryDistribution
+        title="Asset Distribution"
+        totalValue={assetValues.total}
+        totalLabel="Assets Summary"
+        data={distributionData}
+        formatValue={formatAmount}
+        chartHeight={240}
+      />
       
       <Tabs value={activeTab} onChange={(value) => setActiveTab(value as AssetType | 'all' | string)} mb="md">
         <Tabs.List>
@@ -373,47 +321,13 @@ export default function AssetsPage() {
       </Tabs>
 
       {filteredAssets.length === 0 ? (
-        <Card withBorder padding="xl" radius="md" ta="center">
-          <IconChartPie size={50} stroke={1.5} opacity={0.3} />
-          <Text size="xl" fw={500} mt="md">No assets found</Text>
-          <Text size="sm" c="dimmed" mt="sm">
-            {activeTab === 'all' 
-              ? "You haven't added any assets yet. Click 'Add Asset' to create your first asset."
-              : (() => {
-                  // For standard asset types
-                  if (ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]) {
-                    return `You don't have any ${ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]?.name.toLowerCase() || 'assets'} yet.`;
-                  }
-                  
-                  // For custom asset types
-                  const customType = customAssetTypes.find(t => t.id === activeTab);
-                  if (customType) {
-                    return `You don't have any ${customType.name.toLowerCase()} assets yet.`;
-                  }
-                  
-                  return "You don't have any assets in this category yet.";
-                })()
-              }
-          </Text>
-          <Button mt="xl" leftSection={<IconPlus size={16} />} onClick={open}>
-            Add {(() => {
-              if (activeTab === 'all') return 'Asset';
-              
-              // For standard asset types
-              if (ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]) {
-                return ASSET_TYPES[activeTab as keyof typeof ASSET_TYPES]?.name || 'Asset';
-              }
-              
-              // For custom asset types
-              const customType = customAssetTypes.find(t => t.id === activeTab);
-              if (customType) {
-                return customType.name;
-              }
-              
-              return 'Asset';
-            })()}
-          </Button>
-        </Card>
+        <EmptyStateCard
+          icon={<IconChartPie size={50} />}
+          title="No assets found"
+          description={getEmptyStateDescription()}
+          actionLabel={getActionLabel()}
+          onAction={open}
+        />
       ) : (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
           {filteredAssets.map(asset => {
@@ -449,6 +363,29 @@ export default function AssetsPage() {
               }
             }
             
+            // Action menu items
+            const actionMenuItems = [
+              {
+                icon: <IconRefresh size={14} />,
+                label: 'Update Price',
+                onClick: () => {
+                  // In a real app, this would fetch the current value from an API
+                  alert('In a real app, this would fetch current prices from an API');
+                }
+              },
+              {
+                icon: <IconEdit size={14} />,
+                label: 'Edit',
+                onClick: () => handleEditAsset(asset)
+              },
+              {
+                icon: <IconTrash size={14} />,
+                label: 'Delete',
+                color: 'red',
+                onClick: () => deleteAsset(asset.id)
+              }
+            ];
+            
             return (
               <Card key={asset.id} withBorder padding="lg" radius="md">
                 <Group justify="space-between" mb="xs">
@@ -458,38 +395,7 @@ export default function AssetsPage() {
                     </ThemeIcon>
                     <Text fw={500}>{asset?.name}</Text>
                   </Group>
-                  <Menu position="bottom-end" withinPortal>
-                    <Menu.Target>
-                      <ActionIcon variant="subtle">
-                        <IconDotsVertical size={16} />
-                      </ActionIcon>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                      <Menu.Item 
-                        leftSection={<IconRefresh size={14} />}
-                        onClick={() => {
-                          // In a real app, this would fetch the current value from an API
-                          // For now this is just a placeholder
-                          alert('In a real app, this would fetch current prices from an API');
-                        }}
-                      >
-                        Update Price
-                      </Menu.Item>
-                      <Menu.Item 
-                        leftSection={<IconEdit size={14} />}
-                        onClick={() => handleEditAsset(asset)}
-                      >
-                        Edit
-                      </Menu.Item>
-                      <Menu.Item 
-                        leftSection={<IconTrash size={14} />}
-                        color="red"
-                        onClick={() => deleteAsset(asset.id)}
-                      >
-                        Delete
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
+                  <ActionMenu items={actionMenuItems} />
                 </Group>
                 
                 <Text size="sm" c="dimmed" mb="md">
@@ -522,7 +428,7 @@ export default function AssetsPage() {
                         {profitLossPercentage !== undefined && (
                           <Text span size="xs" ml={4}>
                             ({profitLossPercentage >= 0 ? '+' : ''}
-                            {profitLossPercentage.toFixed(2)}%)
+                            {formatPercentage(profitLossPercentage)})
                           </Text>
                         )}
                       </Text>
@@ -545,8 +451,8 @@ export default function AssetsPage() {
         </SimpleGrid>
       )}
       
-      {/* Asset Form Modal */}
-      <Modal 
+      {/* Use ModalWrapper component */}
+      <ModalWrapper 
         opened={opened} 
         onClose={handleCloseModal} 
         title={editAsset ? "Edit Asset" : "Add New Asset"} 
@@ -558,7 +464,7 @@ export default function AssetsPage() {
           initialType={activeTab !== 'all' && !customAssetTypes.some(t => t.id === activeTab) ? activeTab as AssetType : undefined}
           customTypeId={customAssetTypes.some(t => t.id === activeTab) ? activeTab : undefined}
         />
-      </Modal>
+      </ModalWrapper>
     </Container>
   );
 }

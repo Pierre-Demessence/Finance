@@ -10,33 +10,18 @@ import {
   Text,
   Table,
   ActionIcon,
-  Menu,
   Badge,
-  Modal,
   ThemeIcon,
-  Stack,
-  TextInput,
-  Select,
-  SimpleGrid,
-  Pagination,
   SegmentedControl,
-  Box,
-  Flex,
-  Chip,
-  NativeSelect,
-  Group as MantineGroup,
+  Select,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { 
   IconEdit, 
   IconTrash, 
-  IconDotsVertical, 
   IconPlus,
-  IconSearch,
   IconCalendar,
   IconCategory,
-  IconFilter,
-  IconSortAscending,
   IconReceipt2,
   IconWallet,
 } from '@tabler/icons-react';
@@ -49,6 +34,14 @@ import Link from 'next/link';
 import { notifications } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { getIconByName } from '@/utils/iconUtils';
+// Import new UI components
+import FilterBar from '@/components/ui/FilterBar';
+import EmptyStateCard from '@/components/ui/EmptyStateCard';
+import ActionMenu from '@/components/ui/ActionMenu';
+import ModalWrapper from '@/components/ui/ModalWrapper';
+import PaginationControl from '@/components/ui/PaginationControl';
+import DataCard from '@/components/ui/DataCard';
+import { getStatusColor } from '@/utils/financeUtils';
 
 const TRANSACTIONS_PER_PAGE = 10;
 const PAGE_SIZE_OPTIONS = [
@@ -229,6 +222,15 @@ export default function TransactionsPage() {
     { value: 'amount_asc', label: 'Amount (Lowest First)' },
   ];
   
+  // Calculate summary values
+  const totalIncome = filteredTransactions
+    .filter(t => t.type === TransactionType.INCOME)
+    .reduce((sum, t) => sum + t.amount, 0);
+    
+  const totalExpenses = filteredTransactions
+    .filter(t => t.type === TransactionType.EXPENSE)
+    .reduce((sum, t) => sum + t.amount, 0);
+  
   return (
     <Container size="xl">
       <Group justify="space-between" mb="md">
@@ -241,104 +243,75 @@ export default function TransactionsPage() {
         </Button>
       </Group>
       
-      <Card withBorder p="md" mb="md">
-        <Stack>
-          <Group>
-            <TextInput
-              placeholder="Search transactions..."
-              leftSection={<IconSearch size={16} />}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <Select
-              placeholder="Sort by"
-              leftSection={<IconSortAscending size={16} />}
-              data={sortOptions}
-              value={`${sortBy}_${sortOrder}`}
-              onChange={(value) => {
-                if (!value) return;
-                
-                const [field, order] = value.split('_');
-                setSortBy(field as 'date' | 'amount');
-                setSortOrder(order as 'asc' | 'desc');
-              }}
-              w={200}
-            />
-          </Group>
-          
-          <Group align="flex-end">
-            <DatePickerInput
-              type="range"
-              placeholder="Filter by date range"
-              leftSection={<IconCalendar size={16} />}
-              value={dateRange}
-              onChange={setDateRange}
-              w="auto"
-              clearable
-              flex={1}
-            />
-            
-            <Select
-              placeholder="Filter by category"
-              leftSection={<IconCategory size={16} />}
-              data={categoryOptions}
-              value={categoryFilter}
-              onChange={setCategoryFilter}
-              w="auto"
-              flex={1}
-              clearable
-            />
-            
-            <Select
-              placeholder="Filter by account"
-              leftSection={<IconWallet size={16} />}
-              data={accountOptions}
-              value={accountFilter}
-              onChange={setAccountFilter}
-              w="auto"
-              flex={1}
-              clearable
-            />
-            
-            <Button variant="light" onClick={resetFilters}>
-              Reset Filters
-            </Button>
-          </Group>
-          
-          <SegmentedControl
-            value={typeFilter}
-            onChange={(value) => setTypeFilter(value as TransactionType | 'all')}
-            data={[
-              { label: 'All Types', value: 'all' },
-              { label: 'Income', value: TransactionType.INCOME },
-              { label: 'Expenses', value: TransactionType.EXPENSE },
-              { label: 'Transfers', value: TransactionType.TRANSFER },
-            ]}
+      <FilterBar
+        onSearch={setSearch}
+        searchValue={search}
+        sortOptions={sortOptions}
+        sortValue={`${sortBy}_${sortOrder}`}
+        onSort={(value) => {
+          if (!value) return;
+          const [field, order] = value.split('_');
+          setSortBy(field as 'date' | 'amount');
+          setSortOrder(order as 'asc' | 'desc');
+        }}
+        onReset={resetFilters}
+      >
+        <Group align="flex-end">
+          <DatePickerInput
+            type="range"
+            placeholder="Filter by date range"
+            leftSection={<IconCalendar size={16} />}
+            value={dateRange}
+            onChange={setDateRange}
+            w="auto"
+            clearable
+            flex={1}
           />
-        </Stack>
-      </Card>
+          
+          <Select
+            placeholder="Filter by category"
+            leftSection={<IconCategory size={16} />}
+            data={categoryOptions}
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            w="auto"
+            flex={1}
+            clearable
+          />
+          
+          <Select
+            placeholder="Filter by account"
+            leftSection={<IconWallet size={16} />}
+            data={accountOptions}
+            value={accountFilter}
+            onChange={setAccountFilter}
+            w="auto"
+            flex={1}
+            clearable
+          />
+        </Group>
+        
+        <SegmentedControl
+          value={typeFilter}
+          onChange={(value) => setTypeFilter(value as TransactionType | 'all')}
+          data={[
+            { label: 'All Types', value: 'all' },
+            { label: 'Income', value: TransactionType.INCOME },
+            { label: 'Expenses', value: TransactionType.EXPENSE },
+            { label: 'Transfers', value: TransactionType.TRANSFER },
+          ]}
+        />
+      </FilterBar>
       
       {transactions.length === 0 ? (
-        <Card withBorder>
-          <Stack align="center" py="xl">
-            <ThemeIcon size="xl" radius="xl" color="blue" variant="light">
-              <IconReceipt2 size={30} />
-            </ThemeIcon>
-            <Text ta="center" fw={500}>No transactions yet</Text>
-            <Text ta="center" c="dimmed" size="sm">
-              Add your first transaction to start tracking your finances
-            </Text>
-            <Button 
-              leftSection={<IconPlus size={16} />}
-              onClick={handleAddTransaction}
-              variant="light"
-              mt="md"
-            >
-              Add Transaction
-            </Button>
-          </Stack>
-        </Card>
+        <EmptyStateCard
+          icon={<IconReceipt2 size={30} />}
+          title="No transactions yet"
+          description="Add your first transaction to start tracking your finances"
+          actionLabel="Add Transaction"
+          onAction={handleAddTransaction}
+          actionVariant="light"
+        />
       ) : filteredTransactions.length === 0 ? (
         <Card withBorder>
           <Text ta="center" c="dimmed" py="lg">
@@ -366,6 +339,21 @@ export default function TransactionsPage() {
                   const fromAccount = transaction.fromAccountId ? accounts.find(acc => acc.id === transaction.fromAccountId) : null;
                   const toAccount = transaction.toAccountId ? accounts.find(acc => acc.id === transaction.toAccountId) : null;
                   
+                  // Action menu items
+                  const menuItems = [
+                    {
+                      icon: <IconEdit size={14} />,
+                      label: 'Edit',
+                      onClick: () => handleEditTransaction(transaction)
+                    },
+                    {
+                      icon: <IconTrash size={14} />,
+                      label: 'Delete',
+                      color: 'red',
+                      onClick: () => handleDeleteConfirm(transaction)
+                    }
+                  ];
+                  
                   return (
                     <Table.Tr key={transaction.id}>
                       <Table.Td>
@@ -376,13 +364,7 @@ export default function TransactionsPage() {
                           <ThemeIcon 
                             size="sm" 
                             variant="light" 
-                            color={
-                              transaction.type === TransactionType.INCOME 
-                                ? 'teal' 
-                                : transaction.type === TransactionType.EXPENSE
-                                ? 'red'
-                                : 'blue'
-                            }
+                            color={getStatusColor(transaction.type)}
                           >
                             {category?.icon ? 
                               getIconByName(category.icon) : 
@@ -396,28 +378,18 @@ export default function TransactionsPage() {
                           {category?.name || 'Uncategorized'}
                         </Group>
                       </Table.Td>
-                      <Table.Td>                          <Badge 
-                            color={
-                              transaction.type === TransactionType.INCOME 
-                                ? 'teal' 
-                                : transaction.type === TransactionType.EXPENSE
-                                ? 'red'
-                                : 'blue'
-                            }
-                            size="xs"
-                          >
-                            {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
-                          </Badge></Table.Td>
+                      <Table.Td>
+                        <Badge 
+                          color={getStatusColor(transaction.type)}
+                          size="xs"
+                        >
+                          {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                        </Badge>
+                      </Table.Td>
                       <Table.Td>{transaction.description || '-'}</Table.Td>
                       <Table.Td>
                         <Text 
-                          c={
-                            transaction.type === TransactionType.INCOME 
-                              ? 'teal' 
-                              : transaction.type === TransactionType.EXPENSE
-                              ? 'red'
-                              : undefined
-                          }
+                          c={getStatusColor(transaction.type)}
                           fw={500}
                         >
                           {formatAmount(
@@ -463,28 +435,7 @@ export default function TransactionsPage() {
                           >
                             <IconEdit size={16} />
                           </ActionIcon>
-                          <Menu position="bottom-end" withArrow withinPortal>
-                            <Menu.Target>
-                              <ActionIcon variant="subtle">
-                                <IconDotsVertical size={16} />
-                              </ActionIcon>
-                            </Menu.Target>
-                            <Menu.Dropdown>
-                              <Menu.Item 
-                                leftSection={<IconEdit size={14} />}
-                                onClick={() => handleEditTransaction(transaction)}
-                              >
-                                Edit
-                              </Menu.Item>
-                              <Menu.Item 
-                                leftSection={<IconTrash size={14} />}
-                                color="red"
-                                onClick={() => handleDeleteConfirm(transaction)}
-                              >
-                                Delete
-                              </Menu.Item>
-                            </Menu.Dropdown>
-                          </Menu>
+                          <ActionMenu items={menuItems} />
                         </Group>
                       </Table.Td>
                     </Table.Tr>
@@ -494,55 +445,43 @@ export default function TransactionsPage() {
             </Table>
             
             {totalPages > 1 && (
-              <Flex justify="center" mt="md" align="center" gap="md">
-                <Pagination 
-                  value={currentPage} 
-                  onChange={setCurrentPage}
-                  total={totalPages} 
-                />
-                <NativeSelect
-                  data={PAGE_SIZE_OPTIONS}
-                  value={pageSize.toString()}
-                  onChange={(event) => setPageSize(Number(event.currentTarget.value))}
-                  style={{ width: '130px' }}
-                />
-              </Flex>
+              <PaginationControl
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setPageSize}
+              />
             )}
           </Card>
           
-          <SimpleGrid cols={{ base: 1, md: 3 }} mb="md">
-            <Card withBorder p="md">
-              <Text fw={500} size="sm" mb="xs" c="dimmed">Total Transactions</Text>
-              <Text fw={700} size="xl">{filteredTransactions.length}</Text>
-            </Card>
-            <Card withBorder p="md">
-              <Text fw={500} size="sm" mb="xs" c="dimmed">Total Income</Text>
-              <Text fw={700} size="xl" c="teal">
-                +{formatAmount(
-                  filteredTransactions
-                    .filter(t => t.type === TransactionType.INCOME)
-                    .reduce((sum, t) => sum + t.amount, 0)
-                )}
-              </Text>
-            </Card>
-            <Card withBorder p="md">
-              <Text fw={500} size="sm" mb="xs" c="dimmed">Total Expenses</Text>
-              <Text fw={700} size="xl" c="red">
-                -{formatAmount(
-                  filteredTransactions
-                    .filter(t => t.type === TransactionType.EXPENSE)
-                    .reduce((sum, t) => sum + t.amount, 0)
-                )}
-              </Text>
-            </Card>
-          </SimpleGrid>
+          <Group grow mb="md">
+            <DataCard
+              title="Total Transactions"
+              value={filteredTransactions.length.toString()}
+              icon={<IconReceipt2 size={20} />}
+            />
+            <DataCard
+              title="Total Income"
+              value={`+${formatAmount(totalIncome)}`}
+              color="teal"
+              valueColor="teal"
+            />
+            <DataCard
+              title="Total Expenses"
+              value={`-${formatAmount(totalExpenses)}`}
+              color="red"
+              valueColor="red"
+            />
+          </Group>
         </>
       )}
       
-      {/* Transaction Form Modal */}
-      <Modal 
-        opened={opened} 
-        onClose={close} 
+      {/* Use ModalWrapper component */}
+      <ModalWrapper
+        opened={opened}
+        onClose={close}
         title={selectedTransaction ? 'Edit Transaction' : 'New Transaction'}
         size="lg"
       >
@@ -553,14 +492,14 @@ export default function TransactionsPage() {
           initialType={typeFilter !== 'all' ? typeFilter : undefined}
           initialAccountId={accountFilter || undefined}
         />
-      </Modal>
+      </ModalWrapper>
       
       {/* Delete Confirmation Modal */}
-      <Modal 
-        opened={deleteModalOpened} 
-        onClose={closeDeleteModal} 
+      <ModalWrapper
+        opened={deleteModalOpened}
+        onClose={closeDeleteModal}
         title="Delete Transaction"
-        centered
+        centered={true}
       >
         <Text mb="lg">
           Are you sure you want to delete this transaction? This action cannot be undone.
@@ -569,7 +508,7 @@ export default function TransactionsPage() {
           <Button variant="light" onClick={closeDeleteModal}>Cancel</Button>
           <Button color="red" onClick={handleDeleteTransaction}>Delete</Button>
         </Group>
-      </Modal>
+      </ModalWrapper>
     </Container>
   );
 }

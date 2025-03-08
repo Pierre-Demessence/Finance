@@ -14,7 +14,6 @@ import {
   RingProgress,
   Paper,
   Badge,
-  Modal,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { 
@@ -36,6 +35,12 @@ import dayjs from 'dayjs';
 import AccountForm from '@/components/AccountForm';
 import TransactionForm from '@/components/TransactionForm';
 import ChartTooltip from '@/components/ChartTooltip';
+// Import new UI components
+import DataCard from '@/components/ui/DataCard';
+import ChartCard from '@/components/ui/ChartCard';
+import EmptyStateCard from '@/components/ui/EmptyStateCard';
+import ModalWrapper from '@/components/ui/ModalWrapper';
+import { dateHelpers } from '@/utils/financeUtils';
 
 export default function Dashboard() {
   const { accounts, transactions, assets, transactionCategories } = useFinanceStore();
@@ -97,6 +102,21 @@ export default function Dashboard() {
     closeTransactionModal();
   };
   
+  // Calculate total account balances
+  const totalAccountsBalance = accounts.reduce((total, acc) => {
+    if (acc.isArchived) return total;
+    const balance = calculateAccountBalance(acc.id);
+    return total + toBaseCurrency(balance, acc.currency);
+  }, 0);
+  
+  // Calculate total assets value
+  const totalAssetsValue = assets.reduce((total, asset) => {
+    const account = accounts.find(acc => acc.id === asset.accountId);
+    if (!account) return total;
+    const value = asset.quantity * asset.currentPrice;
+    return total + toBaseCurrency(value, account.currency);
+  }, 0);
+  
   return (
     <Container size="xl">
       <Group justify="space-between" mb="md">
@@ -119,122 +139,54 @@ export default function Dashboard() {
       </Group>
       
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md" mb="md">
-        <Card withBorder padding="lg" radius="md">
-          <Group justify="space-between">
-            <Text size="lg" fw={500} c="dimmed">Net Worth</Text>
-            <ThemeIcon color="blue" variant="light" size="lg" radius="md">
-              <IconCash size={20} stroke={1.5} />
-            </ThemeIcon>
-          </Group>
-          <Text fw={700} size="xl" mt="md">{formatAmount(netWorth)}</Text>
-          <Text size="xs" c="dimmed" mt={4}>All accounts and assets</Text>
-        </Card>
+        <DataCard
+          title="Net Worth"
+          value={formatAmount(netWorth)}
+          subtitle="All accounts and assets"
+          icon={<IconCash size={20} />}
+          color="blue"
+        />
         
-        <Card withBorder padding="lg" radius="md">
-          <Group justify="space-between">
-            <Text size="lg" fw={500} c="dimmed">Cash Flow (30d)</Text>
-            <ThemeIcon 
-              color={netCashflow >= 0 ? 'teal' : 'red'} 
-              variant="light" 
-              size="lg"
-              radius="md"
-            >
-              {netCashflow >= 0 ? 
-                <IconArrowUpRight size={20} stroke={1.5} /> : 
-                <IconArrowDownRight size={20} stroke={1.5} />
-              }
-            </ThemeIcon>
-          </Group>
-          <Text 
-            fw={700} 
-            size="xl" 
-            mt="md" 
-            c={netCashflow >= 0 ? 'teal' : 'red'}
-          >
-            {netCashflow >= 0 ? '+' : ''}{formatAmount(netCashflow)}
-          </Text>
-          <Group mt={4} gap="xs">
-            <Text size="xs" c="teal">+{formatAmount(totalIncome)}</Text>
-            <Text size="xs">/</Text>
-            <Text size="xs" c="red">-{formatAmount(totalExpenses)}</Text>
-          </Group>
-        </Card>
+        <DataCard
+          title="Cash Flow (30d)"
+          value={`${netCashflow >= 0 ? '+' : ''}${formatAmount(netCashflow)}`}
+          subtitle={`+${formatAmount(totalIncome)} / -${formatAmount(totalExpenses)}`}
+          icon={netCashflow >= 0 ? <IconArrowUpRight size={20} /> : <IconArrowDownRight size={20} />}
+          color={netCashflow >= 0 ? 'teal' : 'red'}
+          valueColor={netCashflow >= 0 ? 'teal' : 'red'}
+        />
         
-        <Card withBorder padding="lg" radius="md" component={Link} href="/accounts">
-          <Group justify="space-between">
-            <Text size="lg" fw={500} c="dimmed">Accounts</Text>
-            <Group gap="xs">
-              <Badge>{activeAccountsCount}</Badge>
-              <ThemeIcon color="blue" variant="light" size="lg" radius="md">
-                <IconWallet size={20} stroke={1.5} />
-              </ThemeIcon>
-            </Group>
-          </Group>
-          <Group mt="md" gap="xs">
-            {accounts.length > 0 ? (
-              <Stack gap={0}>
-                <Text fw={700} size="xl">
-                  {formatAmount(accounts.reduce((total, acc) => {
-                    if (acc.isArchived) return total;
-                    const balance = calculateAccountBalance(acc.id);
-                    return total + toBaseCurrency(balance, acc.currency);
-                  }, 0))}
-                </Text>
-                <Text size="xs" c="dimmed">Total Balance</Text>
-              </Stack>
-            ) : (
-              <Button 
-                size="xs"
-                leftSection={<IconPlus size={12} />}
-                onClick={openAccountModal}
-              >
-                Add Your First Account
-              </Button>
-            )}
-          </Group>
-        </Card>
+        <DataCard
+          title="Accounts"
+          value={formatAmount(totalAccountsBalance)}
+          subtitle="Total Balance"
+          icon={<IconWallet size={20} />}
+          color="blue"
+          badgeValue={activeAccountsCount}
+          onClick={accounts.length > 0 ? undefined : openAccountModal}
+          asLink={accounts.length > 0}
+          href="/accounts"
+        />
         
-        <Card withBorder padding="lg" radius="md" component={Link} href="/assets">
-          <Group justify="space-between">
-            <Text size="lg" fw={500} c="dimmed">Assets</Text>
-            <Group gap="xs">
-              <Badge>{assetsCount}</Badge>
-              <ThemeIcon color="violet" variant="light" size="lg" radius="md">
-                <IconCoin size={20} stroke={1.5} />
-              </ThemeIcon>
-            </Group>
-          </Group>
-          <Group mt="md" gap={8}>
-            {assets.length > 0 ? (
-              <Stack gap={4}>
-                <Text fw={700} size="xl">
-                  {formatAmount(assets.reduce((total, asset) => {
-                    const account = accounts.find(acc => acc.id === asset.accountId);
-                    if (!account) return total;
-                    const value = asset.quantity * asset.currentPrice;
-                    return total + toBaseCurrency(value, account.currency);
-                  }, 0))}
-                </Text>
-                <Text size="xs" c="dimmed">Total Value</Text>
-              </Stack>
-            ) : (
-              <Button 
-                component={Link}
-                href="/assets"
-                size="xs"
-                leftSection={<IconPlus size={12} />}
-              >
-                Add Your First Asset
-              </Button>
-            )}
-          </Group>
-        </Card>
+        <DataCard
+          title="Assets"
+          value={formatAmount(totalAssetsValue)}
+          subtitle="Total Value"
+          icon={<IconCoin size={20} />}
+          color="violet"
+          badgeValue={assetsCount}
+          asLink
+          href="/assets"
+        />
       </SimpleGrid>
       
       <Grid mb="md">
         <Grid.Col span={{ base: 12, md: 8 }}>
-          <Card withBorder padding="lg" radius="md">
-            <Text fw={500} mb="md">Net Worth Over Time</Text>
+          <ChartCard 
+            title="Net Worth Over Time"
+            height={300}
+            hasData={netWorthData.length > 0}
+          >
             <AreaChart
               h={300}
               data={netWorthData}
@@ -261,47 +213,40 @@ export default function Dashboard() {
                 },
               }}
             />
-          </Card>
+          </ChartCard>
         </Grid.Col>
         
         <Grid.Col span={{ base: 12, md: 4 }}>
-          <Card withBorder padding="lg" radius="md" h="100%">
-            <Text fw={500} mb="md">Expenses by Category</Text>
-            {expenseData.length > 0 ? (
-              <DonutChart
-                data={expenseData}
-                withLabels
-                size={200}
-                thickness={20}
-                tooltipProps={{
-                  content: ({ payload }) => {
-                    if (!payload?.length) return null;
-                    const item = payload[0].payload;
-                    return (
-                      <ChartTooltip
-                        label={item.name}
-                        value={formatAmount(item.value)}
-                        color={item.color}
-                        icon={<IconChartPie size={16} />}
-                        secondaryLabel="Percentage"
-                        secondaryValue={`${((item.value / totalExpenses) * 100).toFixed(1)}% of expenses`}
-                      />
-                    );
-                  },
-                }}
-                style={{ margin: '0 auto' }}
-              />
-            ) : (
-              <Stack align="center" mt="xl">
-                <ThemeIcon size="xl" color="gray" variant="light" radius="xl">
-                  <IconChartPie size={24} />
-                </ThemeIcon>
-                <Text c="dimmed" mt="md" ta="center">
-                  No expense data for the selected period
-                </Text>
-              </Stack>
-            )}
-          </Card>
+          <ChartCard
+            title="Expenses by Category"
+            height={300} 
+            hasData={expenseData.length > 0}
+            emptyMessage="No expense data for the selected period"
+          >
+            <DonutChart
+              data={expenseData}
+              withLabels
+              size={200}
+              thickness={20}
+              tooltipProps={{
+                content: ({ payload }) => {
+                  if (!payload?.length) return null;
+                  const item = payload[0].payload;
+                  return (
+                    <ChartTooltip
+                      label={item.name}
+                      value={formatAmount(item.value)}
+                      color={item.color}
+                      icon={<IconChartPie size={16} />}
+                      secondaryLabel="Percentage"
+                      secondaryValue={`${((item.value / totalExpenses) * 100).toFixed(1)}% of expenses`}
+                    />
+                  );
+                },
+              }}
+              style={{ margin: '0 auto' }}
+            />
+          </ChartCard>
         </Grid.Col>
       </Grid>
       
@@ -335,7 +280,9 @@ export default function Dashboard() {
                             {category?.name || 'Uncategorized'}
                           </Text>
                           <Text size="xs" c="dimmed">
-                            {dayjs(transaction.date).format('MMM D, YYYY')}
+                            {dateHelpers.formatDate(
+                              transaction.date instanceof Date ? transaction.date : new Date(transaction.date)
+                            )}
                           </Text>
                         </Stack>
                         <Text 
@@ -353,20 +300,14 @@ export default function Dashboard() {
                 })}
             </Stack>
           ) : (
-            <Stack align="center" mt="xl" mb="xl">
-              <ThemeIcon size="xl" color="gray" variant="light" radius="xl">
-                <IconChartBar size={24} />
-              </ThemeIcon>
-              <Text c="dimmed" mt="md">No transactions yet</Text>
-              <Button 
-                mt="sm"
-                size="xs"
-                leftSection={<IconPlus size={12} />}
-                onClick={openTransactionModal}
-              >
-                Add Transaction
-              </Button>
-            </Stack>
+            <EmptyStateCard
+              icon={<IconChartBar size={24} />}
+              title="No transactions yet"
+              description="Add transactions to track your income and expenses"
+              actionLabel="Add Transaction"
+              onAction={openTransactionModal}
+              actionVariant="light"
+            />
           )}
         </Card>
         
@@ -449,7 +390,7 @@ export default function Dashboard() {
       </SimpleGrid>
 
       {/* Account Form Modal */}
-      <Modal 
+      <ModalWrapper 
         opened={accountModalOpened} 
         onClose={closeAccountModal} 
         title="New Account"
@@ -459,10 +400,10 @@ export default function Dashboard() {
           onSubmit={handleFormSubmit}
           onCancel={closeAccountModal}
         />
-      </Modal>
+      </ModalWrapper>
       
       {/* Transaction Form Modal */}
-      <Modal 
+      <ModalWrapper 
         opened={transactionModalOpened} 
         onClose={closeTransactionModal} 
         title="New Transaction"
@@ -472,7 +413,7 @@ export default function Dashboard() {
           onSubmit={handleFormSubmit}
           onCancel={closeTransactionModal}
         />
-      </Modal>
+      </ModalWrapper>
     </Container>
   );
 }

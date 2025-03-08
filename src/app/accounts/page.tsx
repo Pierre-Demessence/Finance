@@ -6,42 +6,31 @@ import {
   Container,
   Group,
   Button,
-  Card,
   Text,
-  Table,
-  ActionIcon,
-  Menu,
-  Badge,
-  Modal,
-  ThemeIcon,
-  Stack,
-  TextInput,
-  Select,
   SimpleGrid,
+  Card,
+  ThemeIcon,
+  Badge,
 } from '@mantine/core';
-import { 
-  IconEdit, 
-  IconTrash, 
-  IconDotsVertical, 
+import { useDisclosure } from '@mantine/hooks';
+import { notifications } from '@mantine/notifications';
+import {
   IconPlus,
   IconArrowRight,
-  IconSearch,
   IconWallet,
-  IconChartLine,
-  IconArrowUp,
-  IconArrowDown,
-  IconFilter,
-  IconSortAscending,
 } from '@tabler/icons-react';
 import { useFinanceStore } from '@/store/financeStore';
-import { useDisclosure } from '@mantine/hooks';
 import { useCurrency, useNetWorth } from '@/hooks/useFinanceUtils';
 import { Account } from '@/models';
+import { getIconByName } from '@/utils/iconUtils';
+import { getAccountCategoryColor } from '@/utils/financeUtils';
 import AccountForm from '@/components/AccountForm';
 import TransactionForm from '@/components/TransactionForm';
-import Link from 'next/link';
-import { notifications } from '@mantine/notifications';
-import { getIconByName } from '@/utils/iconUtils';
+import EmptyStateCard from '@/components/ui/EmptyStateCard';
+import FilterBar from '@/components/ui/FilterBar';
+import ActionMenu from '@/components/ui/ActionMenu';
+import ModalWrapper from '@/components/ui/ModalWrapper';
+import DataCard from '@/components/ui/DataCard';
 
 export default function AccountsPage() {
   const { accounts, accountCategories, deleteAccount, archiveAccount, unarchiveAccount } = useFinanceStore();
@@ -139,6 +128,14 @@ export default function AccountsPage() {
     });
   };
   
+  // Reset filters
+  const resetFilters = () => {
+    setSearch('');
+    setCategoryFilter('all');
+    setSortBy('name');
+    setSortOrder('asc');
+  };
+  
   // Filter and sort accounts based on search and filters
   const filteredAccounts = accounts
     .filter(account => {
@@ -167,6 +164,24 @@ export default function AccountsPage() {
       }
     });
   
+  // Calculate totals
+  const activeAccounts = filteredAccounts.filter(acc => !acc.isArchived);
+  const archivedAccounts = filteredAccounts.filter(acc => acc.isArchived);
+  
+  const totalBalance = activeAccounts.reduce((sum, account) => {
+    return sum + calculateAccountBalance(account.id);
+  }, 0);
+  
+  const positiveBalance = activeAccounts.reduce((sum, account) => {
+    const balance = calculateAccountBalance(account.id);
+    return balance > 0 ? sum + balance : sum;
+  }, 0);
+  
+  const negativeBalance = activeAccounts.reduce((sum, account) => {
+    const balance = calculateAccountBalance(account.id);
+    return balance < 0 ? sum + Math.abs(balance) : sum;
+  }, 0);
+  
   // Category filter options
   const categoryOptions = [
     { value: 'all', label: 'All Categories' },
@@ -180,218 +195,193 @@ export default function AccountsPage() {
     { value: 'balance_asc', label: 'Balance (Low to High)' },
     { value: 'balance_desc', label: 'Balance (High to Low)' },
   ];
-  
+
   return (
     <Container size="xl">
       <Group justify="space-between" mb="md">
         <Title order={2}>Accounts</Title>
-        <Button 
+        <Button
           leftSection={<IconPlus size={16} />}
           onClick={handleAddAccount}
         >
-          New Account
+          Add Account
         </Button>
       </Group>
-      
-      <Card withBorder p="md" mb="md">
-        <Group mb="md">
-          <TextInput
-            placeholder="Search accounts..."
-            leftSection={<IconSearch size={16} />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ flex: 1 }}
-          />
-          <Select
-            placeholder="Filter by category"
-            leftSection={<IconFilter size={16} />}
-            data={categoryOptions}
-            value={categoryFilter}
-            onChange={setCategoryFilter}
-            w={220}
-          />
-          <Select
-            placeholder="Sort by"
-            leftSection={<IconSortAscending size={16} />}
-            data={sortOptions}
-            value={`${sortBy}_${sortOrder}`}
-            onChange={(value) => {
-              if (!value) return;
-              
-              const [field, order] = value.split('_');
-              setSortBy(field as 'name' | 'balance');
-              setSortOrder(order as 'asc' | 'desc');
-            }}
-            w={200}
-          />
-        </Group>
-        
-        {accounts.length === 0 ? (
-          <Card withBorder>
-            <Stack align="center" py="xl">
-              <ThemeIcon size="xl" radius="xl" color="blue" variant="light">
-                <IconWallet size={30} />
-              </ThemeIcon>
-              <Text ta="center" fw={500}>No accounts yet</Text>
-              <Text ta="center" c="dimmed" size="sm">
-                Add your first account to start tracking your finances
-              </Text>
-              <Button 
-                leftSection={<IconPlus size={16} />}
-                onClick={handleAddAccount}
-                variant="light"
-                mt="md"
-              >
-                Add Account
-              </Button>
-            </Stack>
-          </Card>
-        ) : filteredAccounts.length === 0 ? (
-          <Text ta="center" c="dimmed" py="lg">
-            No accounts match your search criteria
-          </Text>
-        ) : (
-          <Table>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Name</Table.Th>
-                <Table.Th>Category</Table.Th>
-                <Table.Th>Currency</Table.Th>
-                <Table.Th>Balance</Table.Th>
-                <Table.Th>Actions</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {filteredAccounts.map(account => {
-                const category = accountCategories.find(cat => cat.id === account.categoryId);
-                const balance = calculateAccountBalance(account.id);
-                
-                return (
-                  <Table.Tr key={account.id}>
-                    <Table.Td>
-                      <Group gap="xs">
-                        <Text>{account.name}</Text>
-                        {account.isArchived && (
-                          <Badge color="gray">Archived</Badge>
-                        )}
-                      </Group>
-                    </Table.Td>
-                    <Table.Td>
-                      <Group gap="xs">
-                        <ThemeIcon size="sm" variant="light">
-                          {category?.icon ? getIconByName(category.icon) : <IconWallet size={14} />}
-                        </ThemeIcon>
-                        <Text>{category?.name || 'Unknown'}</Text>
-                      </Group>
-                    </Table.Td>
-                    <Table.Td>{account.currency}</Table.Td>
-                    <Table.Td>
-                      <Group gap="xs" wrap="nowrap">
-                        <Text 
-                          c={balance > 0 ? 'teal' : balance < 0 ? 'red' : undefined}
-                          fw={500}
-                        >
-                          {formatAmount(balance, account.currency)}
-                        </Text>
-                        {balance > 0 ? (
-                          <IconArrowUp size={14} stroke={1.5} color="teal" />
-                        ) : balance < 0 ? (
-                          <IconArrowDown size={14} stroke={1.5} color="red" />
-                        ) : null}
-                      </Group>
-                    </Table.Td>
-                    <Table.Td>
-                      <Group gap="xs" wrap="nowrap">
-                        <ActionIcon 
-                          variant="light" 
-                          color="blue" 
-                          component={Link}
-                          href={`/accounts/${account.id}`}
-                        >
-                          <IconChartLine size={16} />
-                        </ActionIcon>
-                        <Menu position="bottom-end" withArrow withinPortal>
-                          <Menu.Target>
-                            <ActionIcon variant="subtle">
-                              <IconDotsVertical size={16} />
-                            </ActionIcon>
-                          </Menu.Target>
-                          <Menu.Dropdown>
-                            <Menu.Item 
-                              leftSection={<IconEdit size={14} />}
-                              onClick={() => handleEditAccount(account)}
-                            >
-                              Edit
-                            </Menu.Item>
-                            <Menu.Item 
-                              leftSection={<IconArrowRight size={14} />}
-                              onClick={() => handleNewTransaction(account)}
-                            >
-                              New Transaction
-                            </Menu.Item>
-                            {!account.isArchived ? (
-                              <Menu.Item 
-                                leftSection={<IconWallet size={14} />}
-                                onClick={() => handleArchiveAccount(account)}
-                              >
-                                Archive
-                              </Menu.Item>
-                            ) : (
-                              <Menu.Item 
-                                leftSection={<IconWallet size={14} />}
-                                onClick={() => handleUnarchiveAccount(account)}
-                              >
-                                Unarchive
-                              </Menu.Item>
-                            )}
-                            <Menu.Item 
-                              leftSection={<IconTrash size={14} />}
-                              color="red"
-                              onClick={() => handleDeleteConfirm(account)}
-                            >
-                              Delete
-                            </Menu.Item>
-                          </Menu.Dropdown>
-                        </Menu>
-                      </Group>
-                    </Table.Td>
-                  </Table.Tr>
-                );
-              })}
-            </Table.Tbody>
-          </Table>
-        )}
-      </Card>
-      
-      <SimpleGrid cols={{ base: 1, md: 2, lg: 4 }} mb="md">
-        <Card withBorder p="md">
-          <Text fw={500} size="sm" mb="xs" c="dimmed">Total Accounts</Text>
-          <Text fw={700} size="xl">{accounts.length}</Text>
-        </Card>
-        <Card withBorder p="md">
-          <Text fw={500} size="sm" mb="xs" c="dimmed">Active Accounts</Text>
-          <Text fw={700} size="xl">{accounts.filter(a => !a.isArchived).length}</Text>
-        </Card>
-        <Card withBorder p="md">
-          <Text fw={500} size="sm" mb="xs" c="dimmed">Total Balance</Text>
-          <Text fw={700} size="xl">
-            {formatAmount(
-              accounts.reduce((sum, account) => {
-                return sum + calculateAccountBalance(account.id);
-              }, 0)
-            )}
-          </Text>
-        </Card>
-        <Card withBorder p="md">
-          <Text fw={500} size="sm" mb="xs" c="dimmed">Categories</Text>
-          <Text fw={700} size="xl">{accountCategories.length}</Text>
-        </Card>
+
+      <SimpleGrid cols={{ base: 1, sm: 3 }} mb="md">
+        <DataCard
+          title="Total Balance"
+          value={formatAmount(totalBalance)}
+          icon={<IconWallet size={20} />}
+          color="blue"
+          badgeValue={activeAccounts.length}
+        />
+        <DataCard
+          title="Positive Balance"
+          value={formatAmount(positiveBalance)}
+          color="teal"
+          valueColor="teal"
+        />
+        <DataCard
+          title="Negative Balance"
+          value={formatAmount(negativeBalance)}
+          color="red"
+          valueColor="red"
+        />
       </SimpleGrid>
-      
-      {/* Account Form Modal */}
-      <Modal 
-        opened={opened} 
-        onClose={close} 
+
+      <FilterBar
+        onSearch={setSearch}
+        searchValue={search}
+        sortOptions={sortOptions}
+        sortValue={`${sortBy}_${sortOrder}`}
+        onSort={(value) => {
+          if (!value) return;
+          const [field, order] = value.split('_');
+          setSortBy(field as 'name' | 'balance');
+          setSortOrder(order as 'asc' | 'desc');
+        }}
+        filterOptions={[{
+          label: 'Filter by category',
+          options: categoryOptions,
+          value: categoryFilter,
+          onChange: setCategoryFilter,
+          icon: <IconWallet size={16} />
+        }]}
+        onReset={resetFilters}
+      />
+
+      {accounts.length === 0 ? (
+        <EmptyStateCard
+          icon={<IconWallet size={30} />}
+          title="No accounts yet"
+          description="Add your first account to start tracking your finances"
+          actionLabel="Add Account"
+          onAction={handleAddAccount}
+        />
+      ) : filteredAccounts.length === 0 ? (
+        <EmptyStateCard
+          icon={<IconWallet size={30} />}
+          title="No matching accounts"
+          description="Try adjusting your filters"
+          actionLabel="Reset Filters"
+          onAction={resetFilters}
+        />
+      ) : (
+        <>
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+            {activeAccounts.map((account, index) => {
+              const category = accountCategories.find(cat => cat.id === account.categoryId);
+              const balance = calculateAccountBalance(account.id);
+              const menuItems = [
+                {
+                  icon: <IconPlus size={14} />,
+                  label: 'New Transaction',
+                  onClick: () => handleNewTransaction(account),
+                },
+                {
+                  icon: getIconByName('edit'),
+                  label: 'Edit Account',
+                  onClick: () => handleEditAccount(account),
+                },
+                {
+                  icon: getIconByName('archive'),
+                  label: 'Archive Account',
+                  onClick: () => handleArchiveAccount(account),
+                },
+                {
+                  icon: getIconByName('trash'),
+                  label: 'Delete Account',
+                  color: 'red',
+                  onClick: () => handleDeleteConfirm(account),
+                },
+              ];
+
+              return (
+                <Card key={account.id} withBorder padding="lg" radius="md">
+                  <Group justify="space-between" mb="xs">
+                    <Group>
+                      <ThemeIcon color={getAccountCategoryColor(index)} variant="light">
+                        {category?.icon ? getIconByName(category.icon) : <IconWallet size={16} />}
+                      </ThemeIcon>
+                      <Text fw={500}>{account.name}</Text>
+                    </Group>
+                    <ActionMenu items={menuItems} />
+                  </Group>
+
+                  <Text size="sm" c="dimmed" mb="md">
+                    {category?.name || 'Uncategorized'} • {account.currency}
+                  </Text>
+
+                  <Text size="xl" fw={700} c={balance >= 0 ? 'teal' : 'red'}>
+                    {formatAmount(balance, account.currency)}
+                  </Text>
+
+                  {account.description && (
+                    <Text size="sm" c="dimmed" mt="sm">
+                      {account.description}
+                    </Text>
+                  )}
+                </Card>
+              );
+            })}
+          </SimpleGrid>
+
+          {archivedAccounts.length > 0 && (
+            <>
+              <Title order={3} mt="xl" mb="md">Archived Accounts</Title>
+              <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+                {archivedAccounts.map((account, index) => {
+                  const category = accountCategories.find(cat => cat.id === account.categoryId);
+                  const balance = calculateAccountBalance(account.id);
+                  const menuItems = [
+                    {
+                      icon: getIconByName('archive'),
+                      label: 'Unarchive Account',
+                      onClick: () => handleUnarchiveAccount(account),
+                    },
+                    {
+                      icon: getIconByName('trash'),
+                      label: 'Delete Account',
+                      color: 'red',
+                      onClick: () => handleDeleteConfirm(account),
+                    },
+                  ];
+
+                  return (
+                    <Card key={account.id} withBorder padding="lg" radius="md" style={{ opacity: 0.7 }}>
+                      <Group justify="space-between" mb="xs">
+                        <Group>
+                          <ThemeIcon color={getAccountCategoryColor(index)} variant="light">
+                            {category?.icon ? getIconByName(category.icon) : <IconWallet size={16} />}
+                          </ThemeIcon>
+                          <Text fw={500}>{account.name}</Text>
+                        </Group>
+                        <Group gap={8}>
+                          <Badge color="gray">Archived</Badge>
+                          <ActionMenu items={menuItems} />
+                        </Group>
+                      </Group>
+
+                      <Text size="sm" c="dimmed" mb="md">
+                        {category?.name || 'Uncategorized'} • {account.currency}
+                      </Text>
+
+                      <Text size="xl" fw={700} c={balance >= 0 ? 'teal' : 'red'}>
+                        {formatAmount(balance, account.currency)}
+                      </Text>
+                    </Card>
+                  );
+                })}
+              </SimpleGrid>
+            </>
+          )}
+        </>
+      )}
+
+      <ModalWrapper
+        opened={opened}
+        onClose={close}
         title={selectedAccount ? 'Edit Account' : 'New Account'}
         size="lg"
       >
@@ -400,12 +390,11 @@ export default function AccountsPage() {
           onSubmit={handleFormSubmit}
           onCancel={close}
         />
-      </Modal>
-      
-      {/* Transaction Form Modal */}
-      <Modal 
-        opened={transactionModalOpened} 
-        onClose={closeTransactionModal} 
+      </ModalWrapper>
+
+      <ModalWrapper
+        opened={transactionModalOpened}
+        onClose={closeTransactionModal}
         title="New Transaction"
         size="lg"
       >
@@ -414,24 +403,22 @@ export default function AccountsPage() {
           onCancel={closeTransactionModal}
           initialAccountId={selectedAccount?.id}
         />
-      </Modal>
-      
-      {/* Delete Confirmation Modal */}
-      <Modal 
-        opened={deleteModalOpened} 
-        onClose={closeDeleteModal} 
+      </ModalWrapper>
+
+      <ModalWrapper
+        opened={deleteModalOpened}
+        onClose={closeDeleteModal}
         title="Delete Account"
-        centered
+        size="sm"
       >
         <Text mb="lg">
-          Are you sure you want to delete the account "{selectedAccount?.name}"? 
-          This action cannot be undone if the account has no associated transactions or assets.
+          Are you sure you want to delete this account? This cannot be undone, and all associated transactions will be lost.
         </Text>
         <Group justify="flex-end">
           <Button variant="light" onClick={closeDeleteModal}>Cancel</Button>
           <Button color="red" onClick={handleDeleteAccount}>Delete</Button>
         </Group>
-      </Modal>
+      </ModalWrapper>
     </Container>
   );
 }

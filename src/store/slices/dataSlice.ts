@@ -118,7 +118,6 @@ export const createDataSlice: StateCreator<
           categoryId: account.categoryId,
           currency: account.currency,
           initialBalance: adjustedBalance,
-          notes: account.notes,
           isArchived: false,
           createdAt: now,
           updatedAt: now
