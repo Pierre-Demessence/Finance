@@ -59,8 +59,16 @@
   * ✓ Default icons for all the categories (account categories, income/expense category, assets). And show the icons when relevant.
 
   * ✓ Demo Data
-  * Can configure demo data generation (how many transactions, timespan, etc..) in a config file (outsidee of dataSlice.ts directly).
+  * ✓ Can configure demo data generation (how many transactions, timespan, etc..) in a config file (outsidee of dataSlice.ts directly).
   * ✓ Allow to unarchive an account
   * ✓ Rework README
   * Refactor code and make components to avoid duplications.
   * Do something with tags, notes, recurring transaction checkbox?
+
+  * Connect to Third Party Services
+    * Load Data from:
+      * Trading212
+      * eToro
+      * Coinbase
+    * Track prices of Stocks/Crypto
+    * Track price of currency exchange
