@@ -42,6 +42,12 @@ import Link from 'next/link';
 import { notifications } from '@mantine/notifications';
 import { redirect } from 'next/navigation';
 import { AccountCategory, Transaction } from '@/models';
+// Import UI components
+import PaginationControl from '@/components/ui/PaginationControl';
+import ActionMenu from '@/components/ui/ActionMenu';
+import ModalWrapper from '@/components/ui/ModalWrapper';
+import EmptyStateCard from '@/components/ui/EmptyStateCard';
+import ChartCard from '@/components/ui/ChartCard';
 
 const TRANSACTIONS_PER_PAGE = 10;
 const PAGE_SIZE_OPTIONS = [
@@ -237,6 +243,30 @@ export default function AccountDetailsPage({ params }: { params: Params }) {
     closeDeleteModal();
   };
   
+  // Action menu items
+  const menuItems = [
+    {
+      icon: <IconEdit size={14} />,
+      label: 'Edit Account',
+      onClick: handleEditAccount
+    },
+    !account.isArchived ? {
+      icon: <IconHistory size={14} />,
+      label: 'Archive Account',
+      onClick: handleArchiveAccount
+    } : {
+      icon: <IconHistory size={14} />,
+      label: 'Unarchive Account',
+      onClick: handleUnarchiveAccount
+    },
+    {
+      icon: <IconTrash size={14} />,
+      label: 'Delete Account',
+      color: 'red',
+      onClick: handleDeleteConfirm
+    }
+  ];
+  
   return (
     <Container size="xl">
       <Group justify="space-between" mb="lg">
@@ -262,43 +292,7 @@ export default function AccountDetailsPage({ params }: { params: Params }) {
           >
             New Transaction
           </Button>
-          <Menu position="bottom-end" withArrow withinPortal>
-            <Menu.Target>
-              <ActionIcon variant="light" size="lg">
-                <IconDotsVertical size={16} />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item 
-                leftSection={<IconEdit size={14} />}
-                onClick={handleEditAccount}
-              >
-                Edit Account
-              </Menu.Item>
-              {!account.isArchived ? (
-                <Menu.Item 
-                  leftSection={<IconHistory size={14} />}
-                  onClick={handleArchiveAccount}
-                >
-                  Archive Account
-                </Menu.Item>
-              ) : (
-                <Menu.Item 
-                  leftSection={<IconHistory size={14} />}
-                  onClick={handleUnarchiveAccount}
-                >
-                  Unarchive Account
-                </Menu.Item>
-              )}
-              <Menu.Item 
-                leftSection={<IconTrash size={14} />}
-                color="red"
-                onClick={handleDeleteConfirm}
-              >
-                Delete Account
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+          <ActionMenu items={menuItems} />
         </Group>
       </Group>
       
@@ -324,25 +318,14 @@ export default function AccountDetailsPage({ params }: { params: Params }) {
         
         <Tabs.Panel value="transactions" pt="md">
           {accountTransactions.length === 0 ? (
-            <Card withBorder>
-              <Stack align="center" py="xl">
-                <ThemeIcon size="xl" radius="xl" color="blue" variant="light">
-                  <IconCoin size={30} />
-                </ThemeIcon>
-                <Text ta="center" fw={500}>No transactions yet</Text>
-                <Text ta="center" c="dimmed" size="sm">
-                  This account doesn't have any transactions yet
-                </Text>
-                <Button 
-                  leftSection={<IconPlus size={16} />}
-                  onClick={openTransactionModal}
-                  variant="light"
-                  mt="md"
-                >
-                  Add Transaction
-                </Button>
-              </Stack>
-            </Card>
+            <EmptyStateCard
+              icon={<IconCoin size={30} />}
+              title="No transactions yet"
+              description="This account doesn't have any transactions yet"
+              actionLabel="Add Transaction"
+              onAction={openTransactionModal}
+              actionVariant="light"
+            />
           ) : (
             <Card withBorder p="md">
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -413,61 +396,50 @@ export default function AccountDetailsPage({ params }: { params: Params }) {
               </table>
               
               {totalPages > 1 && (
-                <Flex justify="center" mt="md" align="center" gap="md">
-                  <Pagination 
-                    value={currentPage} 
-                    onChange={setCurrentPage}
-                    total={totalPages} 
-                  />
-                  <NativeSelect
-                    data={PAGE_SIZE_OPTIONS}
-                    value={pageSize.toString()}
-                    onChange={(event) => setPageSize(Number(event.currentTarget.value))}
-                    style={{ width: '130px' }}
-                  />
-                </Flex>
+                <PaginationControl
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  pageSizeOptions={PAGE_SIZE_OPTIONS}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={setPageSize}
+                />
               )}
             </Card>
           )}
         </Tabs.Panel>
         
         <Tabs.Panel value="balance" pt="md">
-          <Card withBorder p="md">
-            {balanceHistory.length < 2 ? (
-              <Text ta="center" c="dimmed" py="lg">
-                Not enough transaction history to show the balance chart
-              </Text>
-            ) : (
-              <div>
-                <Title order={4} mb="md">Balance History</Title>
-                <Text c="dimmed" size="sm" mb="md">
-                  Chart showing account balance over time
-                </Text>
-                <LineChart
-                  h={300}
-                  data={balanceHistory}
-                  dataKey="date"
-                  series={[{ name: 'balance', color: 'blue.6' }]}
-                  curveType="natural"
-                  withLegend={false}
-                  gridAxis="xy"
-                  valueFormatter={(value: number) => formatAmount(value, account.currency)}
-                  yAxisProps={{
-                    tickFormatter: (value: number) => formatAmount(value, account.currency),
-                    width: 100
-                  }}
-                  p={20}
-                />
-              </div>
-            )}
-          </Card>
+          <ChartCard 
+            title="Balance History" 
+            description="Chart showing account balance over time"
+            height={300}
+            hasData={balanceHistory.length >= 2}
+            emptyMessage="Not enough transaction history to show the balance chart"
+          >
+            <LineChart
+              h={300}
+              data={balanceHistory}
+              dataKey="date"
+              series={[{ name: 'balance', color: 'blue.6' }]}
+              curveType="natural"
+              withLegend={false}
+              gridAxis="xy"
+              valueFormatter={(value: number) => formatAmount(value, account.currency)}
+              yAxisProps={{
+                tickFormatter: (value: number) => formatAmount(value, account.currency),
+                width: 100
+              }}
+              p={20}
+            />
+          </ChartCard>
         </Tabs.Panel>
       </Tabs>
       
-      {/* Account Form Modal */}
-      <Modal 
-        opened={opened} 
-        onClose={close} 
+      {/* Replace Modal components with ModalWrapper */}
+      <ModalWrapper
+        opened={opened}
+        onClose={close}
         title="Edit Account"
         size="lg"
       >
@@ -476,12 +448,11 @@ export default function AccountDetailsPage({ params }: { params: Params }) {
           onSubmit={handleFormSubmit}
           onCancel={close}
         />
-      </Modal>
+      </ModalWrapper>
       
-      {/* New Transaction Form Modal */}
-      <Modal 
-        opened={transactionModalOpened} 
-        onClose={closeTransactionModal} 
+      <ModalWrapper
+        opened={transactionModalOpened}
+        onClose={closeTransactionModal}
         title="New Transaction"
         size="lg"
       >
@@ -490,12 +461,11 @@ export default function AccountDetailsPage({ params }: { params: Params }) {
           onCancel={closeTransactionModal}
           initialAccountId={accountId}
         />
-      </Modal>
+      </ModalWrapper>
       
-      {/* Edit Transaction Form Modal */}
-      <Modal 
-        opened={editTransactionModalOpened} 
-        onClose={closeEditTransactionModal} 
+      <ModalWrapper
+        opened={editTransactionModalOpened}
+        onClose={closeEditTransactionModal}
         title="Edit Transaction"
         size="lg"
       >
@@ -504,14 +474,13 @@ export default function AccountDetailsPage({ params }: { params: Params }) {
           onSubmit={handleFormSubmit}
           onCancel={closeEditTransactionModal}
         />
-      </Modal>
+      </ModalWrapper>
       
-      {/* Delete Confirmation Modal */}
-      <Modal 
-        opened={deleteModalOpened} 
-        onClose={closeDeleteModal} 
+      <ModalWrapper
+        opened={deleteModalOpened}
+        onClose={closeDeleteModal}
         title="Delete Account"
-        centered
+        centered={true}
       >
         <Text mb="lg">
           Are you sure you want to delete the account "{account.name}"? 
@@ -521,7 +490,7 @@ export default function AccountDetailsPage({ params }: { params: Params }) {
           <Button variant="light" onClick={closeDeleteModal}>Cancel</Button>
           <Button color="red" onClick={handleDeleteAccount}>Delete</Button>
         </Group>
-      </Modal>
+      </ModalWrapper>
     </Container>
   );
 }

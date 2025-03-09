@@ -9,8 +9,14 @@ const config: StorybookConfig = {
   "addons": [
     "@storybook/addon-essentials",
     "@storybook/addon-onboarding",
+    "@storybook/addon-themes",
+    "@storybook/addon-measure",
     "@chromatic-com/storybook",
-    "@storybook/experimental-addon-test"
+    "@storybook/addon-styling-webpack",
+    "@storybook/experimental-addon-test",
+    "storybook-dark-mode",
+    "@storybook/addon-storysource"
+
   ],
   "framework": {
     "name": "@storybook/nextjs",

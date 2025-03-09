@@ -36,6 +36,11 @@ import { useFinanceStore } from '@/store/financeStore';
 import { useCurrency, useNetWorth, useTransactionAnalysis } from '@/hooks/useFinanceUtils';
 import ChartTooltip from '@/components/ChartTooltip';
 import dayjs from 'dayjs';
+// Import UI components
+import DataCard from '@/components/ui/DataCard';
+import ChartCard from '@/components/ui/ChartCard';
+import CategoryDistribution from '@/components/ui/CategoryDistribution';
+import { formatPercentage } from '@/utils/financeUtils';
 
 export default function ReportsPage() {
   // Date range for reports
@@ -124,7 +129,8 @@ export default function ReportsPage() {
       return {
         name: category?.name || 'Unknown',
         value: amount,
-        color: colors[index % colors.length]
+        color: colors[index % colors.length],
+        icon: <IconCash size={16} />
       };
     }).sort((a, b) => b.value - a.value);
   }, [startDate, endDate, getTransactionsByCategory, transactionCategories]);
@@ -139,7 +145,8 @@ export default function ReportsPage() {
       return {
         name: category?.name || 'Unknown',
         value: amount,
-        color: colors[index % colors.length]
+        color: colors[index % colors.length],
+        icon: <IconReceipt size={16} />
       };
     }).sort((a, b) => b.value - a.value);
   }, [startDate, endDate, getTransactionsByCategory, transactionCategories]);
@@ -200,47 +207,31 @@ export default function ReportsPage() {
         </Stack>
       </Card>
       
+      {/* Replace the summary cards with DataCard components */}
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" mb="xl">
-        <Card withBorder padding="lg" radius="md">
-          <Group justify="space-between">
-            <Text size="lg" fw={500} c="dimmed">Net Cash Flow</Text>
-            <ThemeIcon 
-              color={netCashflow >= 0 ? 'teal' : 'red'} 
-              variant="light"
-              size="md"
-              radius="xl"
-            >
-              {netCashflow >= 0 ? <IconArrowUpRight size={18} /> : <IconArrowDownRight size={18} />}
-            </ThemeIcon>
-          </Group>
-          <Text fw={700} size="xl" mt="xs" c={netCashflow >= 0 ? 'teal' : 'red'}>
-            {netCashflow >= 0 ? '+' : ''}{formatAmount(netCashflow)}
-          </Text>
-        </Card>
+        <DataCard
+          title="Net Cash Flow"
+          value={`${netCashflow >= 0 ? '+' : ''}${formatAmount(netCashflow)}`}
+          icon={netCashflow >= 0 ? <IconArrowUpRight size={18} /> : <IconArrowDownRight size={18} />}
+          color={netCashflow >= 0 ? 'teal' : 'red'}
+          valueColor={netCashflow >= 0 ? 'teal' : 'red'}
+        />
         
-        <Card withBorder padding="lg" radius="md">
-          <Group justify="space-between">
-            <Text size="lg" fw={500} c="dimmed">Total Income</Text>
-            <ThemeIcon color="teal" variant="light" size="md" radius="xl">
-              <IconArrowUpRight size={18} />
-            </ThemeIcon>
-          </Group>
-          <Text fw={700} size="xl" mt="xs" c="teal">
-            {formatAmount(totalIncome)}
-          </Text>
-        </Card>
+        <DataCard
+          title="Total Income"
+          value={formatAmount(totalIncome)}
+          icon={<IconArrowUpRight size={18} />}
+          color="teal"
+          valueColor="teal"
+        />
         
-        <Card withBorder padding="lg" radius="md">
-          <Group justify="space-between">
-            <Text size="lg" fw={500} c="dimmed">Total Expenses</Text>
-            <ThemeIcon color="red" variant="light" size="md" radius="xl">
-              <IconArrowDownRight size={18} />
-            </ThemeIcon>
-          </Group>
-          <Text fw={700} size="xl" mt="xs" c="red">
-            {formatAmount(totalExpenses)}
-          </Text>
-        </Card>
+        <DataCard
+          title="Total Expenses"
+          value={formatAmount(totalExpenses)}
+          icon={<IconArrowDownRight size={18} />}
+          color="red"
+          valueColor="red"
+        />
       </SimpleGrid>
       
       <Tabs value={activeTab} onChange={handleTabChange} mb="xl">
@@ -272,8 +263,12 @@ export default function ReportsPage() {
         </Tabs.List>
         
         <Tabs.Panel value="net-worth" pt="md">
-          <Card withBorder padding="lg" radius="md">
-            <Text fw={500} mb="lg">Net Worth Over Time</Text>
+          {/* Replace with ChartCard component */}
+          <ChartCard 
+            title="Net Worth Over Time"
+            height={350}
+            hasData={netWorthData.length > 0}
+          >
             <AreaChart
               h={350}
               data={netWorthData}
@@ -300,142 +295,40 @@ export default function ReportsPage() {
                 },
               }}
             />
-          </Card>
+          </ChartCard>
         </Tabs.Panel>
         
         <Tabs.Panel value="income" pt="md">
-          <Grid>
-            <Grid.Col span={{ base: 12, md: 8 }}>
-              <Card withBorder padding="lg" radius="md">
-                <Text fw={500} mb="lg">Income by Category</Text>
-                <DonutChart
-                  h={350}
-                  data={incomeByCategory}
-                  withLabels
-                  withTooltip
-                  tooltipProps={{
-                    content: ({ payload }) => {
-                      if (!payload?.length) return null;
-                      const item = payload[0].payload;
-                      return (
-                        <ChartTooltip
-                          label={item.name}
-                          value={formatAmount(item.value)}
-                          color="teal"
-                          icon={<IconCash size={16} />}
-                          secondaryLabel="Percentage"
-                          secondaryValue={`${((item.value / totalIncome) * 100).toFixed(1)}%`}
-                        />
-                      );
-                    },
-                  }}
-                />
-              </Card>
-            </Grid.Col>
-            
-            <Grid.Col span={{ base: 12, md: 4 }}>
-              <Card withBorder padding="lg" radius="md">
-                <Text fw={500} mb="md">Top Income Categories</Text>
-                <Stack gap="xs">
-                  {incomeByCategory.slice(0, 5).map((item, index) => {
-                    const percentage = totalIncome ? (item.value / totalIncome) * 100 : 0;
-                    return (
-                      <div key={index}>
-                        <Group justify="space-between" mb={5}>
-                          <Group>
-                            <ThemeIcon color={item.color} variant="light" size="sm">
-                              <IconCash size={16} />
-                            </ThemeIcon>
-                            <Text size="sm">{item.name}</Text>
-                          </Group>
-                          <Text size="sm" fw={500}>
-                            {formatAmount(item.value)} <Text span c="dimmed" size="xs">({percentage.toFixed(1)}%)</Text>
-                          </Text>
-                        </Group>
-                        <Progress 
-                          value={percentage} 
-                          color={item.color}
-                          size="sm" 
-                          mb={2}
-                        />
-                        <Text size="xs" ta="right" c="dimmed">{percentage.toFixed(0)}%</Text>
-                      </div>
-                    );
-                  })}
-                </Stack>
-              </Card>
-            </Grid.Col>
-          </Grid>
+          {/* Replace with CategoryDistribution component */}
+          <CategoryDistribution
+            title="Income by Category"
+            totalValue={totalIncome}
+            totalLabel="Income Summary"
+            data={incomeByCategory}
+            formatValue={formatAmount}
+            chartHeight={350}
+          />
         </Tabs.Panel>
         
         <Tabs.Panel value="expenses" pt="md">
-          <Grid>
-            <Grid.Col span={{ base: 12, md: 8 }}>
-              <Card withBorder padding="lg" radius="md">
-                <Text fw={500} mb="lg">Expenses by Category</Text>
-                <DonutChart
-                  h={350}
-                  data={expenseByCategory}
-                  withLabels
-                  withTooltip
-                  tooltipProps={{
-                    content: ({ payload }) => {
-                      if (!payload?.length) return null;
-                      const item = payload[0].payload;
-                      return (
-                        <ChartTooltip
-                          label={item.name}
-                          value={formatAmount(item.value)}
-                          color="red"
-                          icon={<IconReceipt size={16} />}
-                          secondaryLabel="Percentage"
-                          secondaryValue={`${((item.value / totalExpenses) * 100).toFixed(1)}%`}
-                        />
-                      );
-                    },
-                  }}
-                />
-              </Card>
-            </Grid.Col>
-            
-            <Grid.Col span={{ base: 12, md: 4 }}>
-              <Card withBorder padding="lg" radius="md">
-                <Text fw={500} mb="md">Top Expense Categories</Text>
-                <Stack gap="xs">
-                  {expenseByCategory.slice(0, 5).map((item, index) => {
-                    const percentage = totalExpenses ? (item.value / totalExpenses) * 100 : 0;
-                    return (
-                      <div key={index}>
-                        <Group justify="space-between" mb={5}>
-                          <Group>
-                            <ThemeIcon color={item.color} variant="light" size="sm">
-                              <IconReceipt size={16} />
-                            </ThemeIcon>
-                            <Text size="sm">{item.name}</Text>
-                          </Group>
-                          <Text size="sm" fw={500}>
-                            {formatAmount(item.value)} <Text span c="dimmed" size="xs">({percentage.toFixed(1)}%)</Text>
-                          </Text>
-                        </Group>
-                        <Progress 
-                          value={percentage} 
-                          color={item.color}
-                          size="sm" 
-                          mb={2}
-                        />
-                        <Text size="xs" ta="right" c="dimmed">{percentage.toFixed(0)}%</Text>
-                      </div>
-                    );
-                  })}
-                </Stack>
-              </Card>
-            </Grid.Col>
-          </Grid>
+          {/* Replace with CategoryDistribution component */}
+          <CategoryDistribution
+            title="Expenses by Category"
+            totalValue={totalExpenses}
+            totalLabel="Expenses Summary"
+            data={expenseByCategory}
+            formatValue={formatAmount}
+            chartHeight={350}
+          />
         </Tabs.Panel>
         
         <Tabs.Panel value="monthly" pt="md">
-          <Card withBorder padding="lg" radius="md">
-            <Text fw={500} mb="lg">Monthly Income vs. Expenses</Text>
+          {/* Replace with ChartCard component */}
+          <ChartCard 
+            title="Monthly Income vs. Expenses" 
+            height={350}
+            hasData={monthlyComparisonData.length > 0}
+          >
             <BarChart
               h={350}
               data={monthlyComparisonData}
@@ -463,7 +356,7 @@ export default function ReportsPage() {
                 },
               }}
             />
-          </Card>
+          </ChartCard>
         </Tabs.Panel>
       </Tabs>
     </Container>
