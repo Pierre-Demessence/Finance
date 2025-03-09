@@ -34,6 +34,9 @@ export default function CategoryDistribution({
   chartHeight = 240,
   formatValue 
 }: CategoryDistributionProps) {
+  // Sort data by value in descending order to display the largest values first
+  const sortedData = [...data].sort((a, b) => b.value - a.value);
+  
   return (
     <Grid>
       <Grid.Col span={{ base: 12, md: 8 }}>
@@ -45,7 +48,7 @@ export default function CategoryDistribution({
           
           <DonutChart
             h={chartHeight}
-            data={data}
+            data={sortedData}
             withLabels
             withTooltip
             tooltipProps={{
@@ -72,7 +75,7 @@ export default function CategoryDistribution({
         <Card withBorder padding="lg" radius="md">
           <Text fw={500} mb="md">{totalLabel}</Text>
           <Stack gap="xs">
-            {data.map((item, index) => {
+            {sortedData.map((item, index) => {
               const percentage = totalValue ? (item.value / totalValue) * 100 : 0;
               
               return (
