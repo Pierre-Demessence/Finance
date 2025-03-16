@@ -131,9 +131,12 @@ export const createBudgetsSlice: StateCreator<
     // Sum up relevant transactions
     return transactions
       .filter(t => {
-        // Only include expenses in specified categories
+        // Only include expenses
         if (t.type !== 'expense') return false;
-        if (!budget.categoryIds.includes(t.categoryId)) return false;
+        
+        // If no categories are selected, include all expense transactions
+        // Otherwise, check if the transaction's category is in the selected categories
+        if (budget.categoryIds.length > 0 && !budget.categoryIds.includes(t.categoryId)) return false;
         
         // Check if transaction falls within the budget period
         const txDate = dayjs(t.date);
