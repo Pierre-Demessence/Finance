@@ -7,7 +7,8 @@ import {
   Asset, 
   Transaction, 
   TransactionType,
-  Currency
+  Currency,
+  BalanceRecord
 } from '@/models';
 import { CURRENCIES } from '@/config/constants';
 import dayjs from 'dayjs';
@@ -277,15 +278,69 @@ export function useTransactionAnalysis() {
  * Hook for net worth calculation and analysis
  */
 export function useNetWorth() {
-  const { accounts, assets, transactions } = useFinanceStore();
+  const { accounts, assets, transactions, balanceRecords, getBalanceRecordsForAccount } = useFinanceStore();
   const { toBaseCurrency } = useCurrency();
   
   /**
-   * Calculate the current balance of an account considering all transactions
+   * Calculate the current balance of an account considering all transactions and balance records
    * @param accountId - ID of the account to calculate balance for
+   * @param asOfDate - Optional date to calculate balance as of (defaults to now)
    */
-  const calculateAccountBalance = (accountId: string): number => {
-    return transactions.reduce((balance, transaction) => {
+  const calculateAccountBalance = (accountId: string, asOfDate?: Date): number => {
+    const account = accounts.find(a => a.id === accountId);
+    if (!account) return 0;
+    
+    const calculationDate = asOfDate || new Date();
+    
+    // Get balance records for this account, sorted by date (newest first)
+    const accountBalanceRecords = getBalanceRecordsForAccount(accountId);
+    
+    // Find the most recent balance record before or on the calculation date
+    const latestRecord = accountBalanceRecords.find(record => {
+      const recordDate = record.date instanceof Date ? record.date : new Date(record.date);
+      return recordDate <= calculationDate;
+    });
+    
+    // If we have a balance record, use it as the baseline
+    if (latestRecord) {
+      // Use the balance record amount as our starting point
+      let balance = latestRecord.amount;
+      const recordDate = latestRecord.date instanceof Date ? latestRecord.date : new Date(latestRecord.date);
+      
+      // Apply transactions that occurred after the balance record date
+      const laterTransactions = transactions.filter(t => {
+        const transactionDate = t.date instanceof Date ? t.date : new Date(t.date);
+        return (t.fromAccountId === accountId || t.toAccountId === accountId) && 
+               transactionDate > recordDate &&
+               transactionDate <= calculationDate;
+      });
+      
+      // Apply each transaction
+      laterTransactions.forEach(transaction => {
+        if (transaction.fromAccountId === accountId) {
+          // Money going out of the account
+          balance -= transaction.amount;
+        } else if (transaction.toAccountId === accountId) {
+          // Money coming into the account
+          balance += transaction.amount;
+        }
+      });
+      
+      return balance;
+    }
+    
+    // No balance record found, calculate based on initial balance and all transactions
+    let initialBalance = account.initialBalance || 0;
+    
+    // Filter transactions up to the calculation date
+    const relevantTransactions = transactions.filter(t => {
+      const transactionDate = t.date instanceof Date ? t.date : new Date(t.date);
+      return (t.fromAccountId === accountId || t.toAccountId === accountId) && 
+             transactionDate <= calculationDate;
+    });
+    
+    // Calculate balance from transactions
+    return relevantTransactions.reduce((balance, transaction) => {
       if (transaction.fromAccountId === accountId) {
         // Money going out of the account
         return balance - transaction.amount;
@@ -294,7 +349,7 @@ export function useNetWorth() {
         return balance + transaction.amount;
       }
       return balance;
-    }, 0); // Start with zero as the initial balance
+    }, initialBalance);
   };
   
   /**
@@ -352,21 +407,9 @@ export function useNetWorth() {
     const calculateNetWorthAtDate = (date: Date): number => {
       let netWorth = 0;
       
-      // Only include transactions up to this date
-      const relevantTransactions = transactions.filter(t => 
-        dayjs(t.date).isBefore(date, 'day') || dayjs(t.date).isSame(date, 'day')
-      );
-      
-      // Calculate account balances up to this date
+      // Calculate account balances up to this date (now using our improved function)
       accounts.forEach(account => {
-        const balance = relevantTransactions.reduce((sum, t) => {
-          if (t.fromAccountId === account.id) {
-            return sum - t.amount;
-          } else if (t.toAccountId === account.id) {
-            return sum + t.amount;
-          }
-          return sum;
-        }, 0);
+        const balance = calculateAccountBalance(account.id, date);
         netWorth += toBaseCurrency(balance, account.currency);
       });
       
@@ -414,7 +457,7 @@ export function useNetWorth() {
       calculateNetWorth,
       getNetWorthHistory,
     };
-  }, [accounts, assets, transactions, toBaseCurrency]);
+  }, [accounts, assets, transactions, balanceRecords, toBaseCurrency]);
 }
 
 /**
