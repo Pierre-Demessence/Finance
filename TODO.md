@@ -43,7 +43,7 @@
   * ✓ Pagination for transaction list
 
 * Assets Page:
-  * Show acquisition value
+  * ✓ Show acquisition value
 
 * Reports Page:
   * ✓ Modify Top Income/Expense Categories so it looks like the Assets Summary card in the Assets Page.
