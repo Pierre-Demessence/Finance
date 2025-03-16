@@ -6,48 +6,39 @@ import {
   Container,
   Group,
   Button,
-  Card,
-  Text,
-  SimpleGrid,
-  Badge,
-  ActionIcon,
-  Menu,
-  Modal,
   Tabs,
-  Grid,
-  ThemeIcon,
+  ButtonGroup,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconPlus,
-  IconDotsVertical,
-  IconEdit,
-  IconTrash,
   IconChartPie,
   IconChartLine,
-  IconRefresh,
   IconCurrencyBitcoin,
   IconBuilding,
   IconCar,
   IconDeviceLaptop,
   IconCube,
+  IconLayoutGrid,
+  IconLayoutList,
 } from '@tabler/icons-react';
 import { useFinanceStore } from '@/store/financeStore';
 import { useCurrency } from '@/hooks/useFinanceUtils';
 import { Asset, AssetType } from '@/models';
 import { ASSET_TYPES } from '@/config/constants';
 import AssetForm from '@/components/AssetForm';
-// Import our new components
 import EmptyStateCard from '@/components/ui/EmptyStateCard';
 import CategoryDistribution from '@/components/ui/CategoryDistribution';
-import ActionMenu from '@/components/ui/ActionMenu';
 import ModalWrapper from '@/components/ui/ModalWrapper';
-import { formatPercentage } from '@/utils/financeUtils';
+// Import our view components
+import AssetGridView from '@/components/views/assets/AssetGridView';
+import AssetListView from '@/components/views/assets/AssetListView';
 
 export default function AssetsPage() {
   const [opened, { open, close }] = useDisclosure(false);
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [activeTab, setActiveTab] = useState<AssetType | 'all' | string>('all');
+  const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
 
   const { assets, accounts, customAssetTypes, deleteAsset } = useFinanceStore();
   const { formatAmount, toBaseCurrency } = useCurrency();
@@ -250,9 +241,27 @@ export default function AssetsPage() {
     <Container size="xl">
       <Group justify="space-between" mb="md">
         <Title order={2}>Assets</Title>
-        <Button leftSection={<IconPlus size={16} />} onClick={open}>
-          Add Asset
-        </Button>
+        <Group>
+          <ButtonGroup>
+            <Button 
+              variant={viewType === 'grid' ? 'filled' : 'default'} 
+              onClick={() => setViewType('grid')} 
+              leftSection={<IconLayoutGrid size={16} />}
+            >
+              Grid
+            </Button>
+            <Button 
+              variant={viewType === 'list' ? 'filled' : 'default'} 
+              onClick={() => setViewType('list')} 
+              leftSection={<IconLayoutList size={16} />}
+            >
+              List
+            </Button>
+          </ButtonGroup>
+          <Button leftSection={<IconPlus size={16} />} onClick={open}>
+            Add Asset
+          </Button>
+        </Group>
       </Group>
 
       {/* Use the CategoryDistribution component */}
@@ -328,133 +337,28 @@ export default function AssetsPage() {
           actionLabel={getActionLabel()}
           onAction={open}
         />
+      ) : viewType === 'grid' ? (
+        <AssetGridView 
+          assets={filteredAssets}
+          accounts={accounts}
+          customAssetTypes={customAssetTypes}
+          onEdit={handleEditAsset}
+          onDelete={deleteAsset}
+          getAssetTypeColor={getAssetTypeColor}
+          getAssetTypeIcon={getAssetTypeIcon}
+          formatAmount={formatAmount}
+        />
       ) : (
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-          {filteredAssets.map(asset => {
-            const account = accounts.find(a => a.id === asset.accountId);
-            if (!account) return null;
-
-            const currentValue = asset.quantity * asset.currentPrice;
-            const acquisitionValue = asset.acquisitionPrice
-              ? asset.quantity * asset.acquisitionPrice
-              : undefined;
-
-            // Calculate profit/loss if acquisition price is available
-            const profitLoss = acquisitionValue
-              ? currentValue - acquisitionValue
-              : undefined;
-
-            const profitLossPercentage = acquisitionValue && acquisitionValue > 0
-              ? ((currentValue - acquisitionValue) / acquisitionValue) * 100
-              : undefined;
-
-            // Get custom asset type if applicable
-            let assetTypeColor = getAssetTypeColor(asset.type);
-            let assetTypeIcon = getAssetTypeIcon(asset.type, asset.customTypeId);
-            let assetTypeName = ASSET_TYPES[asset.type as keyof typeof ASSET_TYPES]?.name || 'Other';
-
-            if (asset.type === AssetType.CUSTOM && asset.customTypeId) {
-              const customType = customAssetTypes.find(t => t.id === asset.customTypeId);
-              if (customType) {
-                assetTypeName = customType.name;
-                if (customType.color) {
-                  assetTypeColor = customType.color;
-                }
-              }
-            }
-
-            // Action menu items
-            const actionMenuItems = [
-              {
-                icon: <IconRefresh size={14} />,
-                label: 'Update Price',
-                onClick: () => {
-                  // In a real app, this would fetch the current value from an API
-                  alert('In a real app, this would fetch current prices from an API');
-                }
-              },
-              {
-                icon: <IconEdit size={14} />,
-                label: 'Edit',
-                onClick: () => handleEditAsset(asset)
-              },
-              {
-                icon: <IconTrash size={14} />,
-                label: 'Delete',
-                color: 'red',
-                onClick: () => deleteAsset(asset.id)
-              }
-            ];
-
-            return (
-              <Card key={asset.id} withBorder padding="lg" radius="md">
-                <Group justify="space-between" mb="xs">
-                  <Group>
-                    <ThemeIcon color={assetTypeColor} variant="light">
-                      {assetTypeIcon}
-                    </ThemeIcon>
-                    <Text fw={500}>{asset?.name}</Text>
-                  </Group>
-                  <ActionMenu items={actionMenuItems} />
-                </Group>
-
-                <Text size="sm" c="dimmed" mb="md">
-                  {asset.description || 'No description'} • {account.name}
-                </Text>
-
-                <Group grow mb="md">
-                  <div>
-                    <Text size="xs" c="dimmed">Quantity</Text>
-                    <Text fw={500}>{asset.quantity}</Text>
-                  </div>
-                  <div>
-                    <Text size="xs" c="dimmed">Current Price</Text>
-                    <Text fw={500}>{formatAmount(asset.currentPrice, account.currency)}</Text>
-                  </div>
-                </Group>
-
-                <Grid mb="md">
-                  <Grid.Col span={acquisitionValue ? 6 : 12}>
-                    <Text size="xs" c="dimmed">Total Value</Text>
-                    <Text fw={700}>{formatAmount(currentValue, account.currency)}</Text>
-                  </Grid.Col>
-
-                  {profitLoss !== undefined && (
-                    <Grid.Col span={6}>
-                      <Text size="xs" c="dimmed">Profit/Loss</Text>
-                      <Text fw={500} c={profitLoss >= 0 ? 'green' : 'red'}>
-                        {profitLoss >= 0 ? '+' : ''}
-                        {formatAmount(profitLoss, account.currency)}
-                        {profitLossPercentage !== undefined && (
-                          <Text span size="xs" ml={4}>
-                            ({profitLossPercentage >= 0 ? '+' : ''}
-                            {formatPercentage(profitLossPercentage)})
-                          </Text>
-                        )}
-                      </Text>
-                    </Grid.Col>
-                  )}
-                </Grid>
-
-                {asset.acquisitionDate && (
-                  <Text size="xs" c="dimmed">
-                    Acquired: {new Date(asset.acquisitionDate).toLocaleDateString()}
-                  </Text>
-                )}
-
-                {acquisitionValue !== undefined && (
-                  <Text size="xs" c="dimmed">
-                    Acquisition Value: {formatAmount(acquisitionValue, account.currency)}
-                  </Text>
-                )}
-
-                <Text size="xs" c="dimmed">
-                  Last updated: {new Date(asset.lastUpdated).toLocaleDateString()}
-                </Text>
-              </Card>
-            );
-          })}
-        </SimpleGrid>
+        <AssetListView 
+          assets={filteredAssets}
+          accounts={accounts}
+          customAssetTypes={customAssetTypes}
+          onEdit={handleEditAsset}
+          onDelete={deleteAsset}
+          getAssetTypeColor={getAssetTypeColor}
+          getAssetTypeIcon={getAssetTypeIcon}
+          formatAmount={formatAmount}
+        />
       )}
 
       {/* Use ModalWrapper component */}
