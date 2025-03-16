@@ -49,7 +49,7 @@
   * ✓ Modify Top Income/Expense Categories so it looks like the Assets Summary card in the Assets Page.
 
 * System:
-  * Implement Account Records:
+  * ✓ Implement Account Records:
       - Record account balance at a specific date
       - Used as reference points for historical balances
       - Override previous transaction calculations
