@@ -9,6 +9,7 @@ import {
 import {
   IconPlus,
   IconWallet,
+  IconExternalLink,
 } from '@tabler/icons-react';
 import { Account } from '@/models';
 import { getIconByName } from '@/utils/iconUtils';
@@ -23,6 +24,7 @@ interface AccountGridViewProps {
   onArchive: (account: Account) => void;
   onUnarchive: (account: Account) => void;
   onNewTransaction: (account: Account) => void;
+  onNavigate?: (account: Account) => void;
   calculateAccountBalance: (accountId: string) => number;
   formatAmount: (amount: number, currency?: string) => string;
   getAccountCategoryColor: (index: number) => string;
@@ -39,6 +41,7 @@ export default function AccountGridView({
   onArchive,
   onUnarchive,
   onNewTransaction,
+  onNavigate,
   calculateAccountBalance,
   formatAmount,
   getAccountCategoryColor
@@ -53,6 +56,11 @@ export default function AccountGridView({
           const category = accountCategories.find(cat => cat.id === account.categoryId);
           const balance = calculateAccountBalance(account.id);
           const menuItems = [
+            {
+              icon: <IconExternalLink size={14} />,
+              label: 'View Details',
+              onClick: () => onNavigate && onNavigate(account),
+            },
             {
               icon: <IconPlus size={14} />,
               label: 'New Transaction',
@@ -114,6 +122,11 @@ export default function AccountGridView({
               const category = accountCategories.find(cat => cat.id === account.categoryId);
               const balance = calculateAccountBalance(account.id);
               const menuItems = [
+                {
+                  icon: <IconExternalLink size={14} />,
+                  label: 'View Details',
+                  onClick: () => onNavigate && onNavigate(account),
+                },
                 {
                   icon: getIconByName('archive'),
                   label: 'Unarchive Account',

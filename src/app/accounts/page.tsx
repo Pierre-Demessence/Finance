@@ -18,6 +18,7 @@ import {
   IconLayoutGrid,
   IconLayoutList,
 } from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
 import { useFinanceStore } from '@/store/financeStore';
 import { useCurrency, useNetWorth } from '@/hooks/useFinanceUtils';
 import { Account } from '@/models';
@@ -33,6 +34,7 @@ import AccountGridView from '@/components/views/accounts/AccountGridView';
 import AccountListView from '@/components/views/accounts/AccountListView';
 
 export default function AccountsPage() {
+  const router = useRouter();
   const { accounts, accountCategories, deleteAccount, archiveAccount, unarchiveAccount } = useFinanceStore();
   const { formatAmount } = useCurrency();
   const { calculateAccountBalance } = useNetWorth();
@@ -116,6 +118,11 @@ export default function AccountsPage() {
   const handleNewTransaction = (account: Account) => {
     setSelectedAccount(account);
     openTransactionModal();
+  };
+  
+  // Handle navigation to account details
+  const handleNavigateToAccount = (account: Account) => {
+    router.push(`/accounts/${account.id}`);
   };
   
   // Handle form submission (both edit and create)
@@ -298,6 +305,7 @@ export default function AccountsPage() {
             onArchive={handleArchiveAccount}
             onUnarchive={handleUnarchiveAccount}
             onNewTransaction={handleNewTransaction}
+            onNavigate={handleNavigateToAccount}
             calculateAccountBalance={calculateAccountBalance}
             formatAmount={formatAmount}
             getAccountCategoryColor={getAccountCategoryColor}
@@ -311,6 +319,7 @@ export default function AccountsPage() {
             onArchive={handleArchiveAccount}
             onUnarchive={handleUnarchiveAccount}
             onNewTransaction={handleNewTransaction}
+            onNavigate={handleNavigateToAccount}
             calculateAccountBalance={calculateAccountBalance}
             formatAmount={formatAmount}
             getAccountCategoryColor={getAccountCategoryColor}

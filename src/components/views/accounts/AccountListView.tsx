@@ -5,6 +5,7 @@ import {
   Badge,
   Title,
   Table,
+  Anchor,
 } from '@mantine/core';
 import {
   IconPlus,
@@ -14,6 +15,7 @@ import {
   IconTrash,
   IconArrowUp,
   IconArrowDown,
+  IconExternalLink,
 } from '@tabler/icons-react';
 import { Account } from '@/models';
 import { getIconByName } from '@/utils/iconUtils';
@@ -28,6 +30,7 @@ interface AccountListViewProps {
   onArchive: (account: Account) => void;
   onUnarchive: (account: Account) => void;
   onNewTransaction: (account: Account) => void;
+  onNavigate?: (account: Account) => void;
   calculateAccountBalance: (accountId: string) => number;
   formatAmount: (amount: number, currency?: string) => string;
   getAccountCategoryColor: (index: number) => string;
@@ -44,6 +47,7 @@ export default function AccountListView({
   onArchive,
   onUnarchive,
   onNewTransaction,
+  onNavigate,
   calculateAccountBalance,
   formatAmount,
   getAccountCategoryColor
@@ -66,6 +70,11 @@ export default function AccountListView({
           const category = accountCategories.find(cat => cat.id === account.categoryId);
           const balance = calculateAccountBalance(account.id);
           const menuItems = [
+            {
+              icon: <IconExternalLink size={14} />,
+              label: 'View Details',
+              onClick: () => onNavigate && onNavigate(account),
+            },
             {
               icon: <IconPlus size={14} />,
               label: 'New Transaction',
@@ -133,6 +142,11 @@ export default function AccountListView({
               const category = accountCategories.find(cat => cat.id === account.categoryId);
               const balance = calculateAccountBalance(account.id);
               const menuItems = [
+                {
+                  icon: <IconExternalLink size={14} />,
+                  label: 'View Details',
+                  onClick: () => onNavigate && onNavigate(account),
+                },
                 {
                   icon: <IconArchive size={14} />,
                   label: 'Unarchive Account',
