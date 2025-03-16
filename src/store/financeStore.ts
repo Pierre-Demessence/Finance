@@ -10,6 +10,7 @@ import { TransactionsSlice, createTransactionsSlice } from './slices/transaction
 import { AssetsSlice, createAssetsSlice } from './slices/assetsSlice';
 import { DataSlice, createDataSlice } from './slices/dataSlice';
 import { BalanceRecordsSlice, createBalanceRecordsSlice } from './slices/balanceRecordsSlice';
+import { BudgetsSlice, createBudgetsSlice } from './slices/budgetsSlice';
 
 // Import persist configuration
 import { persistOptions } from './middleware/persistConfig';
@@ -20,8 +21,9 @@ export type FinanceStore =
   AccountsSlice & 
   TransactionsSlice & 
   AssetsSlice & 
-  DataSlice &
-  BalanceRecordsSlice;
+  DataSlice & 
+  BalanceRecordsSlice & 
+  BudgetsSlice;
 
 // Create the store by combining all slices
 export const useFinanceStore = create<FinanceStore>()(
@@ -33,6 +35,7 @@ export const useFinanceStore = create<FinanceStore>()(
       ...createAssetsSlice(...a),
       ...createDataSlice(...a),
       ...createBalanceRecordsSlice(...a),
+      ...createBudgetsSlice(...a),
     }),
     persistOptions
   )

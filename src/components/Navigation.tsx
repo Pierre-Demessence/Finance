@@ -31,6 +31,7 @@ import {
   IconUser,
   IconLogout,
   IconHeartHandshake,
+  IconPigMoney,
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -60,6 +61,7 @@ export default function Navigation({ children }: NavigationProps) {
     { label: 'Dashboard', icon: <IconDashboard size={18} />, href: '/' },
     { label: 'Accounts', icon: <IconWallet size={18} />, href: '/accounts' },
     { label: 'Transactions', icon: <IconReceipt2 size={18} />, href: '/transactions' },
+    { label: 'Budgets', icon: <IconPigMoney size={18} />, href: '/budgets' },
     { label: 'Assets', icon: <IconCoin size={18} />, href: '/assets' },
     { label: 'Reports', icon: <IconChartLine size={18} />, href: '/reports' },
   ];

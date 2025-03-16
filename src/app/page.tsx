@@ -25,7 +25,8 @@ import {
   IconChartPie,
   IconChartBar,
   IconPlus,
-  IconChartLine
+  IconChartLine,
+  IconPigMoney
 } from '@tabler/icons-react';
 import { AreaChart, BarChart, DonutChart } from '@mantine/charts';
 import Link from 'next/link';
@@ -41,9 +42,10 @@ import ChartCard from '@/components/ui/ChartCard';
 import EmptyStateCard from '@/components/ui/EmptyStateCard';
 import ModalWrapper from '@/components/ui/ModalWrapper';
 import { dateHelpers } from '@/utils/financeUtils';
+import BudgetCard from '@/components/ui/BudgetCard';
 
 export default function Dashboard() {
-  const { accounts, transactions, assets, transactionCategories } = useFinanceStore();
+  const { accounts, transactions, assets, transactionCategories, budgets, getBudgetSpent, getBudgetRemaining } = useFinanceStore();
   const { formatAmount, toBaseCurrency } = useCurrency();
   const { calculateNetWorth, getNetWorthHistory, calculateAccountBalance } = useNetWorth();
   const { 
@@ -117,6 +119,12 @@ export default function Dashboard() {
     return total + toBaseCurrency(value, account.currency);
   }, 0);
   
+  // Get active budgets and their progress
+  const activeBudgets = budgets.filter(budget => {
+    const now = new Date();
+    return (!budget.endDate || budget.endDate >= now) && budget.startDate <= now;
+  }).slice(0, 3); // Show only top 3 budgets
+
   return (
     <Container size="xl">
       <Group justify="space-between" mb="md">
@@ -250,6 +258,34 @@ export default function Dashboard() {
         </Grid.Col>
       </Grid>
       
+      {activeBudgets.length > 0 && (
+        <>
+          <Title order={3} mb="md">Active Budgets</Title>
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md" mb="md">
+            {activeBudgets.map(budget => (
+              <BudgetCard
+                key={budget.id}
+                budget={budget}
+                spent={getBudgetSpent(budget.id)}
+                remaining={getBudgetRemaining(budget.id)}
+                formatAmount={formatAmount}
+              />
+            ))}
+          </SimpleGrid>
+          <Group position="right" mb="xl">
+            <Button
+              component={Link}
+              href="/budgets"
+              variant="light"
+              size="sm"
+              rightSection={<IconChartPie size={16} />}
+            >
+              View All Budgets
+            </Button>
+          </Group>
+        </>
+      )}
+
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
         <Card withBorder padding="lg" radius="md">
           <Group justify="space-between" mb="md">

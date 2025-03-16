@@ -12,5 +12,6 @@ export const persistOptions: PersistOptions<any> = {
     transactionCategories: state.transactionCategories,
     assets: state.assets,
     customAssetTypes: state.customAssetTypes,
+    budgets: state.budgets,
   }),
 };
