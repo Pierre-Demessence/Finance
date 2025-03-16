@@ -26,7 +26,7 @@
 
 * Others:
   * Fix theme selection flickering on page load. (It starts with light theme, then swith to dark theme)
-  * Fix area charts not having any area (nor lines)
+  * ✓ Fix area charts not having any area (nor lines)
 
 
 # Features to Implements:

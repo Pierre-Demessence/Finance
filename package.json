@@ -58,6 +58,9 @@
     "typescript": "^5",
     "vitest": "^3.0.8"
   },
+  "overrides": {
+    "react-is": "^19.0.0"
+  },
   "eslintConfig": {
     "extends": [
       "plugin:storybook/recommended"
