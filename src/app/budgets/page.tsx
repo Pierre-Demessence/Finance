@@ -115,6 +115,7 @@ export default function BudgetsPage() {
                     remaining={getBudgetRemaining(budget.id)}
                     formatAmount={formatAmount}
                     onEdit={() => handleEditBudget(budget)}
+                    categories={transactionCategories}
                   />
                 ))}
               </SimpleGrid>

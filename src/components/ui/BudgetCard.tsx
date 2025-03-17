@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Text, Stack, Group, Progress, ActionIcon } from '@mantine/core';
+import { Card, Text, Stack, Group, Progress, ActionIcon, Badge } from '@mantine/core';
 import { IconPencil } from '@tabler/icons-react';
 import { Budget } from '@/models';
 
@@ -10,6 +10,7 @@ interface BudgetCardProps {
   remaining: number;
   formatAmount: (amount: number) => string;
   onEdit?: () => void;
+  categories?: { id: string; name: string; color?: string }[];
 }
 
 export default function BudgetCard({
@@ -17,11 +18,15 @@ export default function BudgetCard({
   spent,
   remaining,
   formatAmount,
-  onEdit
+  onEdit,
+  categories = []
 }: BudgetCardProps) {
   const progress = (spent / budget.amount) * 100;
   const isOverBudget = spent > budget.amount;
   const progressColor = isOverBudget ? 'red' : progress > 80 ? 'orange' : 'blue';
+
+  // Get selected categories
+  const selectedCategories = categories.filter(cat => budget.categoryIds.includes(cat.id));
 
   return (
     <Card withBorder padding="lg">
@@ -34,6 +39,23 @@ export default function BudgetCard({
             </ActionIcon>
           )}
         </Group>
+
+        {selectedCategories.length > 0 ? (
+          <Group gap="xs">
+            {selectedCategories.map(category => (
+              <Badge 
+                key={category.id} 
+                size="sm" 
+                color={category.color || 'blue'}
+                variant="dot"
+              >
+                {category.name}
+              </Badge>
+            ))}
+          </Group>
+        ) : (
+          <Badge size="sm" variant="dot" color="blue    ">All Categories</Badge>
+        )}
 
         <Progress 
           value={Math.min(progress, 100)} 

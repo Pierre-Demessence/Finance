@@ -54,7 +54,7 @@
       - Used as reference points for historical balances
       - Override previous transaction calculations
   
-  * Budget system
+  * ✓ Budget system
   
   * ✓ Default icons for all the categories (account categories, income/expense category, assets). And show the icons when relevant.
 
