@@ -19,7 +19,7 @@
     "@mantine/notifications": "^7.17.1",
     "@tabler/icons-react": "^3.30.0",
     "dayjs": "^1.11.13",
-    "next": "15.1.7",
+    "next": "15.2.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.1",
